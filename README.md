@@ -72,10 +72,17 @@ place at the table (open seats wait for friends), your character and colour,
 and the house rules (auctions, Beach Break pot, match length, turn timer,
 starting cash, table size). The host can fill empty seats and starts the game.
 
-During a match, the Log / Chat / Trades panel can be minimized into a small
-dock (right side on desktop, above the action bar on phones). The dock shows
-counts for new log lines, chat messages and offers, and opens by itself when
-someone sends you a trade. The board widens to use the freed space.
+During a match, the Log / Chat / Trades panel starts minimized as a small
+dock (right side on desktop, above the action bar on phones), so the board
+gets the room. The dock shows counts for new log lines, chat messages and
+offers, and opens by itself when someone sends you a trade. Opening it is
+remembered for next time.
+
+When several players share a tile, their pieces line up in two columns running
+into the tile (a grid on corners) and shrink a little as it fills, so nobody
+spills onto a neighbouring tile. A piece walking past a crowd slides into the
+next free spot. The layout lives in `tokenPlace` in `client/src/lib/layout.ts`
+and is checked by `tests/crowd.spec.ts`.
 
 ## How it fits together
 

@@ -8,7 +8,8 @@ import { isOwnable } from '@shared/types';
 import type { GameState, OwnableTile, TokenId } from '@shared/types';
 import { paintBoard } from '@/lib/boardTexture';
 import {
-  BOARD_SIZE, BOARD_THICKNESS, HALF, LAYOUTS, TOP_Y, buildingSpots, inwardVector, tileLayout, tokenSpot,
+  BOARD_SIZE, BOARD_THICKNESS, HALF, LAYOUTS, TOP_Y, buildingSpots, crowdPlace, inwardVector,
+  restingOccupants, tileLayout, tokenSpot,
 } from '@/lib/layout';
 import { useGame } from '@/store/game';
 import { useUI } from '@/store/ui';
@@ -55,23 +56,18 @@ function diceSpot(tileId: number): { at: [number, number, number]; out: [number,
   return { at: [x, TOP_Y, z], out: [-ix, -iz] };
 }
 
-function spotFor(state: GameState, playerId: string, index: number) {
-  const id = wrap40(index);
-  const here = state.players.filter((p) => !p.bankrupt && p.position === id);
-  const slot = Math.max(0, here.findIndex((p) => p.id === playerId));
-  return tokenSpot(id, slot, Math.max(1, here.length));
-}
-
-function pointAt(state: GameState, playerId: string, index: number) {
-  const base = Math.floor(index);
-  const frac = index - base;
-  const a = spotFor(state, playerId, base);
-  if (frac < 0.001) return { x: a[0], z: a[2], lift: 0 };
-  const b = spotFor(state, playerId, base + 1);
+/** Position (and size) for a fractional board index, with a hop between tiles. */
+function pointAt(crowd: Map<number, string[]>, playerId: string, index: number) {
+  const base = Math.floor(index + 0.0005);
+  const frac = Math.max(0, index - base);
+  const a = crowdPlace(wrap40(base), crowd.get(wrap40(base)), playerId);
+  if (frac < 0.001) return { x: a.pos[0], z: a.pos[2], lift: 0, scale: a.scale };
+  const b = crowdPlace(wrap40(base + 1), crowd.get(wrap40(base + 1)), playerId);
   return {
-    x: a[0] + (b[0] - a[0]) * frac,
-    z: a[2] + (b[2] - a[2]) * frac,
+    x: a.pos[0] + (b.pos[0] - a.pos[0]) * frac,
+    z: a.pos[2] + (b.pos[2] - a.pos[2]) * frac,
     lift: Math.sin(frac * Math.PI) * HOP,
+    scale: a.scale + (b.scale - a.scale) * frac,
   };
 }
 
@@ -266,6 +262,8 @@ function Tokens({ state, rig, choreo }: {
 }) {
   const groups = useRef(new Map<string, THREE.Group>());
   const motions = useRef(new Map<string, Motion>());
+  /** Eased on-screen spot and size per token, so a crowd re-forms smoothly. */
+  const eased = useRef(new Map<string, { x: number; z: number; s: number }>());
   const stateRef = useRef(state);
   stateRef.current = state;
   const setBoardBusy = useUI((s) => s.setBoardBusy);
@@ -304,11 +302,33 @@ function Tokens({ state, rig, choreo }: {
         if (remaining - step < 0.002) { m.shown = p.position; m.leaping = false; }
       }
 
-      const at = pointAt(st, p.id, m.shown);
+    }
+
+    // Second pass: place everyone, now that we know who is resting where.
+    const crowd = restingOccupants(st.players, (id) => motions.current.get(id)?.shown ?? 0);
+    for (const p of st.players) {
+      if (p.bankrupt) continue;
+      const g = groups.current.get(p.id);
+      const m = motions.current.get(p.id);
+      if (!g || !m) continue;
+      const at = pointAt(crowd, p.id, m.shown);
       const jailed = p.inJail && p.position === 10 && m.shown === 10;
-      const x = at.x + (jailed ? 0.6 : 0);
-      const z = at.z + (jailed ? -0.6 : 0);
+      let x = at.x + (jailed ? 0.5 : 0);
+      let z = at.z + (jailed ? -0.5 : 0);
+      let sc = at.scale;
+      // Resting tokens glide to their new spot when a crowd changes shape;
+      // walking tokens follow the path exactly.
+      const e = eased.current.get(p.id);
+      const walking = Math.abs(m.shown - Math.round(m.shown)) > 0.001;
+      if (e && !walking) {
+        const k = Math.min(1, dt * 10);
+        e.x += (x - e.x) * k; e.z += (z - e.z) * k; e.s += (sc - e.s) * k;
+        x = e.x; z = e.z; sc = e.s;
+      } else {
+        eased.current.set(p.id, { x, z, s: sc });
+      }
       g.position.set(x, TOP_Y + at.lift * (m.leaping ? 3 : 1), z);
+      g.scale.setScalar(sc);
 
       if (ch.following && p.id === st.turn.playerId && rig.current && !rig.current.isManual()) {
         if (gated) {

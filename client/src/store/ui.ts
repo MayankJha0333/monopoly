@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-const PANEL_KEY = 'sunnyport.panelMin';
+/** 'open' only when the player chose to keep the panel open; minimized otherwise. */
+const PANEL_KEY = 'sunnyport.panel';
 const BUSY_MAX_MS = 9000;
 let busyTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -35,10 +36,10 @@ export const useUI = create<UIStore>((set) => ({
   autoEndArmed: true,
   boardInset: 0,
   boardBusy: false,
-  panelMin: (() => { try { return localStorage.getItem(PANEL_KEY) === '1'; } catch { return false; } })(),
+  panelMin: (() => { try { return localStorage.getItem(PANEL_KEY) !== 'open'; } catch { return true; } })(),
   setPanelMin: (panelMin) => {
     set({ panelMin });
-    try { localStorage.setItem(PANEL_KEY, panelMin ? '1' : '0'); } catch { /* private mode */ }
+    try { localStorage.setItem(PANEL_KEY, panelMin ? 'min' : 'open'); } catch { /* private mode */ }
   },
   setHighlight: (ids, color = null) => set({ highlight: ids, highlightColor: color }),
   clearHighlight: () => set({ highlight: [], highlightColor: null }),

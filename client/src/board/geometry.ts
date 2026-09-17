@@ -1,5 +1,5 @@
 import {
-  BOARD_SIZE, HALF, LAYOUTS, buildingSpots, inwardVector, tileLayout, tokenSpot,
+  BOARD_SIZE, HALF, LAYOUTS, buildingSpots, crowdPlace, inwardVector, tileLayout, tokenSpot,
 } from '@/lib/layout';
 import type { Edge } from '@/lib/layout';
 
@@ -52,6 +52,12 @@ export const TILE_BOXES: TileBox[] = LAYOUTS.map((l) => box(l.id));
 
 export const tileBox = (id: number): TileBox =>
   TILE_BOXES[((id % 40) + 40) % 40]!;
+
+/** Where a token stands among whoever else is resting on that tile, and how big. */
+export function crowdPoint(tileId: number, occupants: string[] | undefined, playerId: string): Point & { scale: number } {
+  const place = crowdPlace(tileId, occupants, playerId);
+  return { ...toPx(place.pos[0], place.pos[2]), scale: place.scale };
+}
 
 /** Where a token stands, fanned out when a tile is crowded. */
 export function tokenPoint(tileId: number, slot: number, total: number): Point {

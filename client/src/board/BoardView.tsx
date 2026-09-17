@@ -7,7 +7,8 @@ import { useGame } from '@/store/game';
 import { useUI } from '@/store/ui';
 import { CharacterAvatar } from '@/ui/characters';
 import { FOCUS_ZOOM, ZOOM_STEP, useCamera } from './camera';
-import { BOARD_PX, buildingPoints, outward, ownerStrip, tileBox, tokenPoint } from './geometry';
+import { restingOccupants } from '@/lib/layout';
+import { BOARD_PX, buildingPoints, crowdPoint, outward, ownerStrip, tileBox } from './geometry';
 import { Dice2D } from './Dice2D';
 
 interface Props {
@@ -31,24 +32,20 @@ const TOKEN_PX = 46;
 
 interface Motion { shown: number; dir: 1 | -1; leaping: boolean; restingSince: number }
 
-function spotFor(state: GameState, playerId: string, index: number) {
-  const id = ((Math.round(index) % 40) + 40) % 40;
-  const here = state.players.filter((p) => !p.bankrupt && p.position === id);
-  const slot = Math.max(0, here.findIndex((p) => p.id === playerId));
-  return tokenPoint(id, slot, Math.max(1, here.length));
-}
+const wrap = (n: number) => ((Math.round(n) % 40) + 40) % 40;
 
-/** Position for a fractional board index, with a hop between tiles. */
-function pointAt(state: GameState, playerId: string, index: number) {
-  const base = Math.floor(index);
-  const frac = index - base;
-  const a = spotFor(state, playerId, base);
-  if (frac < 0.001) return { x: a.x, y: a.y, lift: 0 };
-  const b = spotFor(state, playerId, base + 1);
+/** Position and size for a fractional board index, with a hop between tiles. */
+function pointAt(crowd: Map<number, string[]>, playerId: string, index: number) {
+  const base = Math.floor(index + 0.0005);
+  const frac = Math.max(0, index - base);
+  const a = crowdPoint(wrap(base), crowd.get(wrap(base)), playerId);
+  if (frac < 0.001) return { x: a.x, y: a.y, lift: 0, scale: a.scale };
+  const b = crowdPoint(wrap(base + 1), crowd.get(wrap(base + 1)), playerId);
   return {
     x: a.x + (b.x - a.x) * frac,
     y: a.y + (b.y - a.y) * frac,
     lift: Math.sin(frac * Math.PI) * HOP_PX,
+    scale: a.scale + (b.scale - a.scale) * frac,
   };
 }
 
@@ -58,6 +55,7 @@ export function BoardView({ state, focusTile, quality }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tokensRef = useRef(new Map<string, HTMLDivElement>());
   const motions = useRef(new Map<string, Motion>());
+  const eased = useRef(new Map<string, { x: number; y: number; s: number }>());
   const stateRef = useRef(state);
   stateRef.current = state;
   const landedRef = useRef<number | null>(null);
@@ -131,13 +129,32 @@ export function BoardView({ state, focusTile, quality }: Props) {
           }
         }
 
-        const at = pointAt(st, p.id, m.shown);
+      }
+
+      // Second pass: place everyone, now that we know who is resting where.
+      const crowd = restingOccupants(st.players, (id) => motions.current.get(id)?.shown ?? 0);
+      for (const p of st.players) {
+        if (p.bankrupt) continue;
+        const el = tokensRef.current.get(p.id);
+        const m = motions.current.get(p.id);
+        if (!el || !m) continue;
+        const at = pointAt(crowd, p.id, m.shown);
         // In jail the token tucks into the cell instead of standing on the kerb.
         const jailed = p.inJail && p.position === 10 && m.shown === 10;
-        const x = at.x + (jailed ? 16 : 0);
-        const y = at.y + (jailed ? 16 : 0);
+        let x = at.x + (jailed ? 14 : 0);
+        let y = at.y + (jailed ? 14 : 0);
+        let sc = at.scale;
+        const e = eased.current.get(p.id);
+        const walking = Math.abs(m.shown - Math.round(m.shown)) > 0.001;
+        if (e && !walking) {
+          const k = Math.min(1, delta * 10);
+          e.x += (x - e.x) * k; e.y += (y - e.y) * k; e.s += (sc - e.s) * k;
+          x = e.x; y = e.y; sc = e.s;
+        } else {
+          eased.current.set(p.id, { x, y, s: sc });
+        }
         el.style.transform =
-          `translate3d(${(x - TOKEN_PX / 2).toFixed(1)}px, ${(y - TOKEN_PX / 2 - at.lift).toFixed(1)}px, 0)`;
+          `translate3d(${(x - TOKEN_PX / 2).toFixed(1)}px, ${(y - TOKEN_PX / 2 - at.lift).toFixed(1)}px, 0) scale(${sc.toFixed(3)})`;
         el.style.zIndex = String(10 + Math.round(y / 10));
 
         if (following.current && p.id === st.turn.playerId && cam.current && !cam.current.isManual()) {
@@ -184,7 +201,8 @@ export function BoardView({ state, focusTile, quality }: Props) {
     // The dice land first; only then does the token set off.
     walkGate.current = performance.now() + 1300;
     const m = motions.current.get(active.id);
-    const at = pointAt(st, active.id, m?.shown ?? active.position);
+    const crowd = restingOccupants(st.players, (id) => motions.current.get(id)?.shown ?? 0);
+    const at = pointAt(crowd, active.id, m?.shown ?? active.position);
     // Frame the token and the dice together — they land a little way inboard.
     const spot = diceSpot(active.position);
     cam.current.moveTo((at.x + spot.x) / 2, (at.y + spot.y) / 2, FOCUS_ZOOM);
