@@ -58,10 +58,16 @@ function Sea({ animated }: { animated: boolean }) {
     return g;
   }, []);
   const base = useMemo(() => Float32Array.from(inner.attributes.position!.array), [inner]);
+  const next = useRef(0);
   useFrame(({ clock }) => {
     if (!animated || !ref.current) return;
-    const arr = inner.attributes.position!.array as Float32Array;
+    // The waves only need ~30 updates a second. Rebuilding the normals is the
+    // expensive part, so doing it every frame is what makes weaker machines
+    // drop frames on the sea.
     const t = clock.elapsedTime;
+    if (t < next.current) return;
+    next.current = t + 1 / 30;
+    const arr = inner.attributes.position!.array as Float32Array;
     for (let i = 0; i < arr.length; i += 3) {
       const x = base[i]!, z = base[i + 2]!;
       arr[i + 1] = Math.sin(x * 0.22 + t * 1.3) * 0.12 + Math.cos(z * 0.19 + t) * 0.1;
@@ -71,11 +77,15 @@ function Sea({ animated }: { animated: boolean }) {
   });
   return (
     <group position={[0, SEA_Y, 0]}>
-      <mesh geometry={geo} position={[0, -0.05, 0]}>
+      {/* Well below the waves: if the two water surfaces touch, the whole sea
+          shimmers as the camera moves. The wave crests reach about 0.22. */}
+      <mesh geometry={geo} position={[0, -0.45, 0]}>
         <meshStandardMaterial color="#1aa3cf" roughness={0.35} metalness={0.05} />
       </mesh>
       <mesh ref={ref} geometry={inner}>
-        <meshStandardMaterial color="#35c2df" roughness={0.18} metalness={0.05} flatShading transparent opacity={0.9} />
+        {/* Opaque: a see-through surface over the sea below it flickers where
+            the two overlap, and costs a sorting pass every frame. */}
+        <meshStandardMaterial color="#35c2df" roughness={0.18} metalness={0.05} flatShading />
       </mesh>
     </group>
   );
@@ -100,13 +110,16 @@ function Island() {
         <meshStandardMaterial color="#efe3c8" roughness={1} />
       </mesh>
       {/* ring road */}
+      {/* polygonOffset pulls these flat layers towards the camera in the depth
+          test, so the road sits on the plaza and the centre line on the road
+          without the three of them fighting over the same pixels. */}
       <mesh position={[0, GROUND_Y + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <ringGeometry args={[ROAD_R - 1.1, ROAD_R + 1.1, 96]} />
-        <meshStandardMaterial color="#465062" roughness={0.95} />
+        <meshStandardMaterial color="#465062" roughness={0.95} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
       </mesh>
       <mesh position={[0, GROUND_Y + 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[ROAD_R - 0.04, ROAD_R + 0.04, 96]} />
-        <meshBasicMaterial color="#ffe28a" />
+        <meshBasicMaterial color="#ffe28a" polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
       </mesh>
     </group>
   );
