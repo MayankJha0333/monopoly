@@ -32,6 +32,40 @@ Or with Docker:
 docker compose up --build        # http://localhost:3001, data kept in a volume
 ```
 
+### Going live on a VM (Google Cloud, or any Ubuntu/Debian server)
+
+`docker-compose.prod.yml` runs the game with [Caddy](https://caddyserver.com)
+in front of it. Caddy gets and renews the HTTPS certificate by itself and
+passes live sockets through.
+
+1. Point the domain's `A` record at the VM's static IP (no `AAAA` record).
+2. Open ports 80 and 443 (on Google Cloud: tick *Allow HTTP* and *Allow HTTPS*).
+3. On the VM:
+
+   ```bash
+   git clone https://github.com/MayankJha0333/monopoly.git rentrush
+   cd rentrush
+   bash deploy/setup.sh          # swap, Docker, build, start; DOMAIN=rentrush.in by default
+   ```
+
+   For another domain: `DOMAIN=play.example.com bash deploy/setup.sh`
+   (it is saved to `.env`).
+
+To ship a new version later, push to GitHub, then on the VM run
+`bash deploy/update.sh`. Matches in progress end on a restart.
+
+Useful commands on the VM (from the project folder):
+
+| Command | What it does |
+| --- | --- |
+| `sudo docker compose -f docker-compose.prod.yml ps` | Is everything running? |
+| `sudo docker compose -f docker-compose.prod.yml logs -f app` | Live game server log |
+| `sudo docker compose -f docker-compose.prod.yml logs caddy --tail 50` | HTTPS / certificate log |
+| `sudo docker compose -f docker-compose.prod.yml restart app` | Restart the game |
+
+Accounts live in the `app-data` Docker volume on the VM's disk, so a disk
+snapshot schedule backs them up.
+
 ### Configuration
 
 Copy `.env.example` for the full list. The ones that matter in production:
