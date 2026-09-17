@@ -23,6 +23,7 @@ free -h | head -3
 
 say "Installing Docker"
 if ! command -v docker >/dev/null; then
+  # shellcheck disable=SC1091
   . /etc/os-release
   sudo apt-get update -y
   sudo apt-get install -y ca-certificates curl
@@ -51,7 +52,7 @@ say "Building and starting the game (first time takes 3-6 minutes)"
 sudo docker compose -f docker-compose.prod.yml up -d --build
 
 say "Waiting for the site to come up"
-for i in $(seq 1 30); do
+for _ in $(seq 1 30); do
   if curl -fsS --max-time 5 "https://$DOMAIN/healthz" >/dev/null 2>&1; then
     echo "Live: https://$DOMAIN"
     sudo docker compose -f docker-compose.prod.yml ps

@@ -1,0 +1,139 @@
+# Test every push. When a push to main passes, ship it to the VM.
+#
+# Needs these repository secrets (Settings -> Secrets and variables -> Actions):
+#   VM_HOST     the VM's external IP, e.g. 34.93.10.20
+#   VM_USER     the Linux user on the VM (run `whoami` in the VM's SSH window)
+#   VM_SSH_KEY  the private deploy key (the whole file, including the BEGIN/END lines)
+# Optional repository variable:
+#   APP_URL     public address to check after a deploy (default https://rentrush.in)
+
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Rules, accounts and sockets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      - name: Typecheck and build
+        run: npm run build
+      - name: Game rules
+        run: npm run test:rules
+      - name: Accounts
+        run: npm run test:auth
+      - name: Filler-only games
+        run: npm run sim 60
+      - name: Real sockets
+        run: npm run e2e
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      - name: Playwright (uses the runner's Chrome)
+        run: npm run test:ui
+      - name: Keep traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to rentrush.in
+    needs: [checks, browser]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ vars.APP_URL || 'https://rentrush.in' }}
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      APP_URL: ${{ vars.APP_URL || 'https://rentrush.in' }}
+    steps:
+      - name: Check the secrets are set
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          missing=""
+          [ -n "$VM_HOST" ] || missing="$missing VM_HOST"
+          [ -n "$VM_USER" ] || missing="$missing VM_USER"
+          [ -n "$VM_SSH_KEY" ] || missing="$missing VM_SSH_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing"
+            exit 1
+          fi
+
+      - name: Set up SSH
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 15 -t ed25519 "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          cat > ~/.ssh/config <<CONFIG
+          Host vm
+            HostName $VM_HOST
+            User $VM_USER
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          CONFIG
+
+      - name: Update the VM to this commit
+        run: ssh vm "cd ~/rentrush && bash deploy/update.sh ${{ github.sha }}"
+
+      - name: Check the live site
+        run: |
+          for _ in $(seq 1 24); do
+            if curl -fsS --max-time 10 "$APP_URL/healthz"; then
+              echo
+              echo "Live at $APP_URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::$APP_URL/healthz did not answer after the deploy"
+          exit 1
+
+      - name: Show server logs if something went wrong
+        if: failure()
+        run: ssh vm "cd ~/rentrush && sudo docker compose -f docker-compose.prod.yml ps && sudo docker compose -f docker-compose.prod.yml logs --tail 60" || true
