@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
-import { CameraControls } from '@react-three/drei';
+import { CameraControls, PerformanceMonitor } from '@react-three/drei';
 import type CameraControlsImpl from 'camera-controls';
 import { tile } from '@shared/board';
 import { isOwnable } from '@shared/types';
@@ -555,6 +555,25 @@ const DEMO_STATE = (() => {
   } as unknown as GameState;
 })();
 
+/**
+ * Keeps the picture as sharp as the device can manage: full resolution while
+ * frames are quick, a step down when they are not, so a slow device stutters
+ * less instead of dropping frames.
+ */
+function AutoDpr({ high }: { high: boolean }) {
+  const setDpr = useThree((s) => s.setDpr);
+  const max = high ? Math.min(2, window.devicePixelRatio || 1) : 1.5;
+  return (
+    <PerformanceMonitor
+      ms={250}
+      iterations={5}
+      flipflops={3}
+      onChange={({ factor }) => setDpr(Number((1 + factor * (max - 1)).toFixed(2)))}
+      onFallback={() => setDpr(1)}
+    />
+  );
+}
+
 function Lights({ quality }: { quality: 'high' | 'low' }) {
   const high = quality === 'high';
   return (
@@ -587,11 +606,16 @@ export function Board3D({ state, focusTile, quality, onTile, showcase = false }:
     <div className="board-3d" data-quality={quality} data-showcase={showcase}>
       <Canvas
         shadows={high ? 'percentage' : false}
-        dpr={high ? [1, 2] : [1, 1.25]}
-        camera={{ fov: FOV, position: [0, 30, 26], near: 0.5, far: 1600 }}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
+        // Start sharp. AutoDpr lowers this if the device cannot keep up.
+        dpr={high ? [1, 2] : [1, 1.5]}
+        // near: 1 rather than 0.5 doubles depth precision, which stops thin
+        // stacked surfaces (road markings, tile glow, the shoreline) from
+        // flickering against each other as the camera moves.
+        camera={{ fov: FOV, position: [0, 30, 26], near: 1, far: 900 }}
+        gl={{ antialias: true, alpha: false, stencil: false, powerPreference: 'high-performance' }}
         onCreated={({ gl }) => { gl.toneMappingExposure = 1.05; }}
       >
+        <AutoDpr high={high} />
         <fog attach="fog" args={['#d4efff', 90, 420]} />
         <Lights quality={quality} />
         <Suspense fallback={null}>

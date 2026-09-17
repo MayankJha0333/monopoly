@@ -18,9 +18,13 @@ function suggested(): { view: View; quality: Quality } {
   const nav = navigator as Navigator & { deviceMemory?: number };
   const memory = nav.deviceMemory ?? 8;
   const cores = nav.hardwareConcurrency ?? 8;
-  const phone = window.matchMedia('(max-width: 720px)').matches;
+  // Judge the device, not the window: a laptop in a half-width window is still
+  // a laptop. A handheld has a touch pointer *and* a small screen.
+  const touch = window.matchMedia('(pointer: coarse)').matches;
+  const smallScreen = Math.min(screen.width, screen.height) <= 520;
+  const weak = memory <= 4 || cores <= 4;
   const view: View = webglAvailable() && memory >= 2 ? '3d' : '2d';
-  const quality: Quality = memory <= 4 || cores <= 4 || phone ? 'low' : 'high';
+  const quality: Quality = weak || (touch && smallScreen) ? 'low' : 'high';
   return { view, quality };
 }
 
