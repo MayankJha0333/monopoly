@@ -51,8 +51,35 @@ passes live sockets through.
    For another domain: `DOMAIN=play.example.com bash deploy/setup.sh`
    (it is saved to `.env`).
 
-To ship a new version later, push to GitHub, then on the VM run
-`bash deploy/update.sh`. Matches in progress end on a restart.
+### Automatic deploys (GitHub Actions)
+
+`.github/workflows/deploy.yml` runs on every push and pull request:
+
+1. **Rules, accounts and sockets** — typecheck, build, rules, auth, a 60-game
+   simulation and the socket end-to-end test.
+2. **Browser tests** — the Playwright suite, using the runner's Chrome.
+3. **Deploy** (pushes to `main` only, after both pass) — connects to the VM
+   over SSH, runs `deploy/update.sh <commit>`, then checks
+   `https://rentrush.in/healthz`. The old version keeps serving until the new
+   one has built; if the build fails, the site stays on the old version.
+
+One-time setup, in the repository's *Settings → Secrets and variables →
+Actions*:
+
+| Secret | Value |
+| --- | --- |
+| `VM_HOST` | The VM's external IP |
+| `VM_USER` | The Linux user on the VM (`whoami` in the VM's SSH window) |
+| `VM_SSH_KEY` | Private key of a deploy key whose public half is on the VM |
+
+Optional variable `APP_URL` if the site is not `https://rentrush.in`.
+
+**Roll back:** open an older successful run in the Actions tab and choose
+*Re-run jobs* — it deploys that run's commit. Or on the VM:
+`bash deploy/update.sh <commit>`.
+
+**Deploy by hand:** `bash deploy/update.sh` on the VM moves it to the latest
+`main`. Matches in progress end on a restart.
 
 Useful commands on the VM (from the project folder):
 
