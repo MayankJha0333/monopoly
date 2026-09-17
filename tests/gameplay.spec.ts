@@ -50,7 +50,7 @@ test.describe('playing a turn', () => {
     await expect(page.locator('.countdown')).toBeVisible();
 
     // No click: the turn should hand over on its own.
-    await expect(endTurn).toBeHidden({ timeout: 15_000 });
+    await expect(endTurn).toBeHidden({ timeout: 20_000 });
     await ctx.close();
   });
 

@@ -533,13 +533,12 @@ select.select {
   animation: fade 0.18s ease;
 }
 .scrim.is-card { background: rgba(3, 7, 12, 0.55); }
-/* A prompt is about the board, so it covers the board only: the player rail,
-   the log and the action bar stay lit and clickable behind it. */
+/* A prompt dims the whole screen evenly, so the card is the one bright thing. */
 .scrim.is-prompt, .scrim.is-card {
-  inset: var(--play-t) var(--play-r) calc(var(--play-b) + var(--sheet-inset, 0px)) var(--play-l);
-  padding: 8px;
-  background: radial-gradient(120% 120% at 50% 45%, rgba(3, 7, 12, 0.28), rgba(3, 7, 12, 0.62));
-  backdrop-filter: none;
+  inset: 0;
+  padding: 16px;
+  background: radial-gradient(90% 90% at 50% 50%, rgba(4, 14, 26, 0.5), rgba(4, 14, 26, 0.78));
+  backdrop-filter: blur(3px) saturate(0.85);
 }
 .scrim.is-prompt .modal { max-width: 380px; box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6); }
 /* A sheet leaves the board readable — the highlights on it are the point. */

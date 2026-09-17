@@ -2,11 +2,12 @@ import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState, ty
 import { money } from '@shared/rules';
 import type { GameState } from '@shared/types';
 import { send } from '@/net/socket';
-import { isMuted, isMusicOn, play, setMuted, setMusicEnabled, startMusic, stopMusic } from '@/audio/sfx';
+import { isMuted, isMusicOn, play, setMuted, setMusicEnabled } from '@/audio/sfx';
 import { leaveTable, useGame } from '@/store/game';
 import { usePrefs } from '@/store/prefs';
 import { useUI } from '@/store/ui';
 import { ActionBar } from './ActionBar';
+import { Announcer } from './Announcer';
 import { ManageDialog } from './ManageDialog';
 import { AuctionModal, BuyModal, CardModal, InspectModal } from './Modals';
 import { Dialog } from './Dialog';
@@ -57,11 +58,6 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
 
   const openTile = useCallback((id: number) => { setFocusTile(id); setInspect(id); }, []);
 
-  // The music bed runs for as long as a game is on screen.
-  useEffect(() => {
-    startMusic();
-    return () => stopMusic();
-  }, []);
 
   // A band sweeps across when the turn changes hands, so a player who looked
   // away knows whose go it is without reading the log.
@@ -199,6 +195,8 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
             )}
           </div>
         )}
+
+        <Announcer state={state} playerId={playerId} />
 
         <SidePanel state={state} playerId={playerId} onTile={openTile} />
 

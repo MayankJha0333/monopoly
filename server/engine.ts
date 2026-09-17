@@ -9,7 +9,7 @@ import {
   nextOwnableOfType, ownedIds, prop, rentFor, unmortgageCost,
 } from '@shared/rules';
 import type {
-  DiceThrow, GameState, LogKind, OwnableTile, Player, RoomSettings,
+  DiceThrow, GameState, LogEntry, LogKind, OwnableTile, Player, RoomSettings,
   StreetTile, TokenId, TradeSide,
 } from '@shared/types';
 import { isOwnable } from '@shared/types';
@@ -64,6 +64,8 @@ export interface EngineHooks {
   onDice?: (d: DiceThrow) => void;
   onSfx?: (name: string) => void;
   onChange?: () => void;
+  /** fired for every log line, so the room can announce the big moments */
+  onLog?: (entry: LogEntry) => void;
   /** fired once, when the game reaches 'ended' */
   onEnd?: (state: GameState) => void;
 }
@@ -119,7 +121,9 @@ export class Game {
   private sfx(name: string) { this.hooks.onSfx?.(name); }
 
   log(kind: LogKind, text: string, playerId?: string, tileId?: number) {
-    this.state.log.push({ id: nanoid(8), t: Date.now(), kind, text, playerId, tileId });
+    const entry: LogEntry = { id: nanoid(8), t: Date.now(), kind, text, playerId, tileId };
+    this.state.log.push(entry);
+    this.hooks.onLog?.(entry);
     if (this.state.log.length > MAX_LOG) this.state.log.splice(0, this.state.log.length - MAX_LOG);
   }
 

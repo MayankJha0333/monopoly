@@ -7,7 +7,7 @@ import { play } from '@/audio/sfx';
 import { useUI } from '@/store/ui';
 
 /** How long a finished turn lingers before it passes on by itself. */
-const AUTO_END_SECONDS = 6;
+const AUTO_END_SECONDS = 9;
 
 interface Props {
   state: GameState;

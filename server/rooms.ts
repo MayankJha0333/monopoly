@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import type { Server } from 'socket.io';
 import { matchReward, type MatchReward, type PublicUser } from '@shared/progress';
-import type { GameState, Player, RoomSettings, RoomSummary, TokenId } from '@shared/types';
+import type { Announcement, GameState, LogEntry, Player, RoomSettings, RoomSummary, TokenId } from '@shared/types';
 import { Game } from './engine';
 import { botStep } from './bot';
 import { fillerName } from './names';
@@ -21,7 +21,7 @@ export const QUICK_SETTINGS: Partial<RoomSettings> = {
   name: 'Quick match',
   isPrivate: true,
   maxPlayers: 4,
-  turnSeconds: 30,
+  turnSeconds: 45,
   auctions: false,
   maxRounds: 15,
   startingCash: 1500,
@@ -31,6 +31,33 @@ const QUICK_SIZE = 4;
 const QUICK_WAIT_MS: [number, number] = [2500, 5000];
 const QUICK_SEAT_GAP_MS: [number, number] = [600, 1500];
 const QUICK_COUNTDOWN_MS = 3500;
+
+/**
+ * Which log lines become a table-wide announcement, and how they feel.
+ * Returns null for the everyday chatter that only belongs in the log.
+ */
+export function toAnnouncement(e: LogEntry): Announcement | null {
+  const t = e.text;
+  const base = { id: e.id, kind: e.kind, text: t, playerId: e.playerId, tileId: e.tileId };
+  switch (e.kind) {
+    case 'buy': return { ...base, tone: 'good' };
+    case 'build': return /built/.test(t) ? { ...base, tone: 'good' } : null;
+    case 'auction': return / wins /.test(t) ? { ...base, tone: 'good' } : null;
+    case 'trade': return /agreed/.test(t) ? { ...base, tone: 'good' } : null;
+    case 'jail':
+      if (/sent to Lockup|third double/.test(t)) return { ...base, tone: 'bad' };
+      if (/out of Lockup|left Lockup|Free Pass|pays the/.test(t)) return { ...base, tone: 'info' };
+      return null;
+    case 'bankrupt': return { ...base, tone: 'bad' };
+    case 'mortgage': return /mortgaged/.test(t) ? { ...base, tone: 'info' } : null;
+    case 'rent': {
+      const amount = Number(/\$([\d,]+)/.exec(t)?.[1]?.replace(/,/g, '') ?? 0);
+      return amount >= 100 ? { ...base, tone: 'bad' } : null;
+    }
+    case 'win': return { ...base, tone: 'good' };
+    default: return null;
+  }
+}
 
 /** Scales filler think-time; tests set BOT_PACE below 1 to run faster. */
 const BOT_PACE = Math.max(0.05, Number(process.env.BOT_PACE ?? 1) || 1);
@@ -63,6 +90,11 @@ export class Room {
   private graceTimers = new Map<string, NodeJS.Timeout>();
   private flushHandle: NodeJS.Timeout | null = null;
   private nextBotAt = 0;
+  /** Seat fillers wait until the dice and pawn have finished moving. */
+  private settleUntil = 0;
+  /** When the current card was drawn, so fillers give people time to read it. */
+  private cardSeenAt = 0;
+  private cardId: string | null = null;
   private rewards = new Map<string, Reward>();
   lastActivity = Date.now();
   endedAt = 0;
@@ -78,7 +110,16 @@ export class Room {
     const hooks = opts.hooks ?? {};
     this.game = new Game(nanoid(10), code, this.quick ? { ...settings, ...QUICK_SETTINGS } : settings, {
       onChange: () => this.scheduleBroadcast(),
-      onDice: (d) => this.io.to(this.code).emit('dice', d),
+      onDice: (d) => {
+        // Let everyone watch the throw and the walk before anyone acts again.
+        const steps = d.values[0] + d.values[1];
+        this.settleUntil = Date.now() + BOT_PACE * (1500 + steps * 260 + 900);
+        this.io.to(this.code).emit('dice', d);
+      },
+      onLog: (entry) => {
+        const a = toAnnouncement(entry);
+        if (a) this.io.to(this.code).emit('announce', a);
+      },
       onSfx: (n) => this.io.to(this.code).emit('sfx', n),
       onEnd: (s) => this.handleEnd(s, hooks),
     });
@@ -207,13 +248,17 @@ export class Room {
     const s = this.state;
     if (s.status !== 'playing') return;
     const now = Date.now();
-    if (now < this.nextBotAt) return;
+    const cardKey = s.drawnCard ? `${s.drawnCard.playerId}:${s.drawnCard.cardId}:${s.log.length}` : null;
+    if (cardKey !== this.cardId) { this.cardId = cardKey; this.cardSeenAt = now; }
+    if (now < this.nextBotAt || now < this.settleUntil) return;
+    // A drawn card stays up long enough to read.
+    if (s.drawnCard && this.isAutomated(s.drawnCard.playerId) && now - this.cardSeenAt < BOT_PACE * 3200) return;
     for (const p of s.players) {
       if (!this.isAutomated(p.id) || p.bankrupt) continue;
       if (botStep(this.game, p.id)) {
         // People take a moment to think; so do the fillers.
         const quickish = s.turn.phase === 'post-roll' || !!s.drawnCard;
-        this.nextBotAt = now + BOT_PACE * (quickish ? 500 + Math.random() * 700 : 900 + Math.random() * 1500);
+        this.nextBotAt = now + BOT_PACE * (quickish ? 1200 + Math.random() * 900 : 1700 + Math.random() * 1600);
         break;
       }
     }
