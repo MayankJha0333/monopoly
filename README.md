@@ -174,13 +174,20 @@ Every table has a text chat. While someone is writing, the others see
 dot; the line fades three seconds after the last keystroke. The ping carries
 no text and is never echoed back to the sender.
 
-Tables made with friends also get **voice and video**, through
-[LiveKit](https://livekit.io): a "Join call" bar on the table page and a slim
-version inside the game panel, with mute, camera and leave buttons, and a
-green ring around whoever is talking. The server hands out a short-lived pass
-for that table's call only; it never carries audio or video itself. Quick Play
-seats strangers together, so it stays text-only, and with no LiveKit keys set
-the feature is hidden everywhere.
+Tables made with friends also get **voice chat**, through
+[LiveKit](https://livekit.io). Everyone is put into the call as they take a
+seat, so a conversation can simply start — no button to find first. The bar
+shows who is in the call, a green ring around whoever is talking, and a meter
+for your own microphone so you can see it is working. Mute yourself from the
+bar, or from the microphone button in the game's top bar, and hang up at any
+time (a **Rejoin call** button then takes you back). The **host can silence
+anyone** at the table from their tile; that player can turn their microphone
+back on, and the host can silence it again.
+
+The server hands out a short-lived pass for that table's call only and never
+carries the sound itself. Quick Play seats strangers together, so it stays
+text-only, and with no LiveKit keys set the bar says so instead of appearing
+broken. There is no video: voice only.
 
 ### Notifications
 

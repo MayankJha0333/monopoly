@@ -1,3 +1,5 @@
+// Must come first: it opens .env before anything reads a setting.
+import './env';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +10,7 @@ import type { PublicUser } from '@shared/progress';
 import type { ClientToServer, JoinResult, ServerToClient, TokenId } from '@shared/types';
 import { AuthStore, COOKIE, authRouter, cleanName, parseCookies } from './auth';
 import { openDb } from './db';
-import { voiceConfigured, voiceRoom, voiceToken, voiceUrl } from './voice';
+import { silence, voiceConfigured, voiceRoom, voiceToken, voiceUrl } from './voice';
 import { RoomManager, type Room } from './rooms';
 
 const PROD = process.env.NODE_ENV === 'production';
@@ -24,9 +26,11 @@ const VOICE_ORIGINS = (() => {
   const raw = process.env.LIVEKIT_URL?.trim();
   if (!raw) return '';
   try {
-    const u = new URL(raw);
-    const host = u.host;
-    return ` wss://${host} https://${host}`;
+    const { protocol, host } = new URL(raw);
+    // LiveKit opens a socket *and* makes a plain web request to the same
+    // place, so both have to be allowed — in whichever scheme is in use.
+    const plain = protocol === 'ws:' || protocol === 'http:';
+    return plain ? ` ws://${host} http://${host}` : ` wss://${host} https://${host}`;
   } catch {
     return '';
   }
@@ -364,6 +368,27 @@ io.on('connection', (socket) => {
     }
   });
 
+  // The host can silence someone's microphone — for the noisy friend with a
+  // television on behind them.
+  socket.on('voice:mute', async (p) => {
+    const c = ctx();
+    if (!c || c.room.quick) return;
+    const me = c.room.state.players.find((x) => x.id === c.playerId);
+    const target = c.room.state.players.find((x) => x.id === String(p?.playerId ?? ''));
+    if (!me?.isHost) return socket.emit('notice', 'Only the host can do that.');
+    if (!target || target.id === me.id) return;
+    try {
+      const done = await silence(c.room.code, target.id);
+      socket.emit('notice', done
+        ? `${target.name}'s microphone is off.`
+        : `${target.name} is not in the call.`);
+      if (done) io.to(c.room.code).emit('notice', `The host muted ${target.name}.`);
+    } catch (e) {
+      console.error('[rentrush] mute failed', e);
+      socket.emit('notice', 'Could not mute that player.');
+    }
+  });
+
   // A dropped socket keeps its seat for a grace period; the sweeper reaps
   // rooms nobody comes back to.
   socket.on('disconnect', () => {
@@ -374,6 +399,9 @@ io.on('connection', (socket) => {
 
 http.listen(PORT, () => {
   console.log(`[rentrush] server listening on http://localhost:${PORT}`);
+  console.log(voiceConfigured()
+    ? `[rentrush] voice chat is on (${voiceUrl()})`
+    : '[rentrush] voice chat is off — set LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET');
 });
 
 function shutdown(signal: string) {

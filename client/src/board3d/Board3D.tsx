@@ -586,10 +586,10 @@ function Lights({ quality }: { quality: 'high' | 'low' }) {
         color="#fff3dc"
         castShadow={high}
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-19}
-        shadow-camera-right={19}
-        shadow-camera-top={19}
-        shadow-camera-bottom={-19}
+        shadow-camera-left={-27}
+        shadow-camera-right={27}
+        shadow-camera-top={27}
+        shadow-camera-bottom={-27}
         shadow-camera-near={1}
         shadow-camera-far={90}
         shadow-bias={-0.0005}

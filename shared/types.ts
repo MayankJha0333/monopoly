@@ -312,8 +312,10 @@ export interface ClientToServer {
   /** "still typing" ping, sent at most a few times a second while typing */
   'chat:typing': () => void;
 
-  /** Voice/video at a private table: asks for a short-lived LiveKit pass. */
+  /** Voice at a private table: asks for a short-lived LiveKit pass. */
   'voice:token': (cb: (r: VoiceTicket) => void) => void;
+  /** Host only: silences another player's microphone at this table. */
+  'voice:mute': (p: { playerId: string }) => void;
 }
 
 /** Answer to `voice:token`: everything the client needs to join the call. */

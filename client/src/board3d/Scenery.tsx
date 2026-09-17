@@ -133,7 +133,7 @@ function Forest({ count, seed }: { count: number; seed: number }) {
     const r = rng(seed);
     const out: { x: number; z: number; s: number; pine: boolean; hue: number }[] = [];
     let guard = 0;
-    while (out.length < count && guard++ < count * 20) {
+    while (out.length < count && guard++ < count * 40) {
       const a = r() * Math.PI * 2;
       const d = 18.4 + r() * 7.8;
       const x = Math.cos(a) * d, z = Math.sin(a) * d;
@@ -141,6 +141,9 @@ function Forest({ count, seed }: { count: number; seed: number }) {
       if (x < -14 && z > 8) continue;
       if (x < -16 && z < -4 && z > -18) continue;
       if (x > 14 && z < -12) continue;
+      // Trees must not grow into each other: two crowns in the same place
+      // share their surfaces, and the picture flickers between them.
+      if (out.some((t) => (t.x - x) ** 2 + (t.z - z) ** 2 < 1.7 * 1.7)) continue;
       out.push({ x, z, s: 0.8 + r() * 0.9, pine: r() < 0.5, hue: Math.floor(r() * 5) });
     }
     return out;
@@ -153,7 +156,9 @@ function Forest({ count, seed }: { count: number; seed: number }) {
     const greens = ['#2f9e52', '#46b95a', '#1f7a43', '#68c95c', '#f0a04b'];
     let pi = 0, ri = 0;
     layout.forEach((t, i) => {
-      m.compose(new THREE.Vector3(t.x, GROUND_Y + 0.35 * t.s, t.z), q.identity(), new THREE.Vector3(t.s, t.s, t.s));
+      // A hair into the lawn: a trunk resting exactly on it shares that
+      // surface, which flickers as the camera moves.
+      m.compose(new THREE.Vector3(t.x, GROUND_Y + 0.35 * t.s - 0.06, t.z), q.identity(), new THREE.Vector3(t.s, t.s, t.s));
       trunks.current?.setMatrixAt(i, m);
       if (t.pine) {
         m.compose(new THREE.Vector3(t.x, GROUND_Y + 1.5 * t.s, t.z), q, new THREE.Vector3(t.s, t.s, t.s));
@@ -168,6 +173,14 @@ function Forest({ count, seed }: { count: number; seed: number }) {
     });
     if (pines.current) { pines.current.count = pi; if (pines.current.instanceColor) pines.current.instanceColor.needsUpdate = true; }
     if (rounds.current) { rounds.current.count = ri; if (rounds.current.instanceColor) rounds.current.instanceColor.needsUpdate = true; }
+    // Tell three.js the trees moved, and where they now are. Without this the
+    // whole forest is measured as if it sat at the middle of the island, and
+    // it blinks out of sight whenever the camera looks away from the middle.
+    for (const mesh of [trunks.current, pines.current, rounds.current]) {
+      if (!mesh) continue;
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
   }, [layout]);
 
   return (

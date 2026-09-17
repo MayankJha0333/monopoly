@@ -80,18 +80,17 @@ test.describe('chat, typing and voice', () => {
     await guestCtx.close();
   });
 
-  test('friends tables offer voice chat, and a failed call does not break the page', async ({ browser }) => {
+  test('friends tables put you into the call, and a failure does not break the page', async ({ browser }) => {
     const ctx = await browser.newContext();
     const host = await newPlayerPage(ctx);
     await createRoom(host, 'Ana');
 
     const bar = host.locator('.lb-voice-card');
     await expect(bar).toContainText('Voice chat');
-    await expect(bar.getByRole('button', { name: 'Join call' })).toBeVisible();
-
-    // The test LiveKit address goes nowhere: the game should say so and carry on.
-    await bar.getByRole('button', { name: 'Join call' }).click();
-    await expect(host.locator('.vc-error')).toBeVisible({ timeout: 25_000 });
+    // Nobody pressed anything: the call is joined on sitting down. The test
+    // LiveKit address goes nowhere, so it must fail in plain words instead.
+    await expect(host.locator('.vc-error, .vc-hint')).toBeVisible({ timeout: 30_000 });
+    await expect(bar.getByRole('button', { name: /Join call/ })).toHaveCount(0);
     await expect(host.locator('.lb-seats .seat').first()).toBeVisible();
     await expect(host.getByRole('button', { name: /Start the game|Waiting for players/ })).toBeVisible();
 

@@ -85,6 +85,14 @@ function Trees({ spots }: { spots: [number, number, number][] }) {
       crowns.current?.setColorAt(i, c.set(greens[i % greens.length]!));
     });
     if (crowns.current?.instanceColor) crowns.current.instanceColor.needsUpdate = true;
+    // Same as the island's forest: without this the town's trees are measured
+    // as if they all stood in one spot, and they blink away when the camera
+    // turns.
+    for (const mesh of [trunks.current, crowns.current]) {
+      if (!mesh) continue;
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
   }, [spots]);
   return (
     <>
