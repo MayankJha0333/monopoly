@@ -24,7 +24,12 @@ setInterval(() => store.prune(), 6 * 60 * 60 * 1000).unref();
 
 const app = express();
 app.disable('x-powered-by');
-if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY);
+// "true" trusts every hop, a number trusts that many hops (e.g. 1 behind Caddy),
+// anything else is passed through as a list of proxy addresses.
+const TRUST_PROXY = process.env.TRUST_PROXY;
+if (TRUST_PROXY) {
+  app.set('trust proxy', TRUST_PROXY === 'true' ? true : /^\d+$/.test(TRUST_PROXY) ? Number(TRUST_PROXY) : TRUST_PROXY);
+}
 
 // Baseline security headers. The CSP allows Google Fonts and nothing else external.
 app.use((_req, res, next) => {
@@ -54,6 +59,18 @@ const io = new Server<ClientToServer, ServerToClient>(http, {
   cors: { origin: PROD && ORIGINS.length ? ORIGINS : true, credentials: true },
   pingTimeout: 25_000,
   maxHttpBufferSize: 64_000,
+  // CORS does not cover WebSocket upgrades, so check the Origin header here too.
+  // Requests without an Origin (non-browser clients) are let through.
+  allowRequest: (req, done) => {
+    const origin = req.headers.origin;
+    if (!PROD || !origin) return done(null, true);
+    let ok = ORIGINS.includes(origin);
+    if (!ok) {
+      const host = req.headers['x-forwarded-host'] ?? req.headers.host;
+      try { ok = new URL(origin).host === host; } catch { ok = false; }
+    }
+    done(ok ? null : 'origin not allowed', ok);
+  },
 });
 
 const rooms = new RoomManager(io, {
