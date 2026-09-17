@@ -527,7 +527,6 @@
   grid-template-columns: 1.35fr 1fr;
   grid-template-areas:
     'invite invite'
-    'voice voice'
     'seats rules'
     'you rules';
   gap: 16px;
@@ -641,7 +640,7 @@
 .lb-go { min-width: 280px; }
 
 @media (max-width: 900px) {
-  .lb-main { grid-template-columns: 1fr; grid-template-areas: 'invite' 'voice' 'seats' 'you' 'rules'; padding: 8px 16px 16px; }
+  .lb-main { grid-template-columns: 1fr; grid-template-areas: 'invite' 'seats' 'you' 'rules'; padding: 8px 16px 16px; }
   .lb-invite { grid-template-columns: 1fr; justify-items: start; }
   .lb-invite-actions { grid-template-columns: repeat(3, auto); }
   .lb-go { min-width: 0; width: 100%; }
@@ -749,28 +748,18 @@
 
 @keyframes dockUp { from { opacity: 0; transform: translateY(12px); } }
 
-/* Voice card on the friends lobby page */
-.lb-voice-card { padding: 14px 16px; grid-area: voice; }
-.lb-voice-card .vc-bar[data-live='true'] {
-  grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+/* Voice lives with the players: a mark on each seat, your buttons in the
+   Players card header. */
+.lb-head .vc-mine, .lb-head .vc-pill { margin-left: auto; }
+.lb-seats-card .vc-btn, .lb-head .vc-pill {
+  background: #ffffff; border-color: rgba(8, 44, 70, 0.14); color: #10314b;
 }
-.lb-voice-card .vc-bar[data-live='true'] .vc-head { grid-column: 1; }
-.lb-voice-card .vc-bar[data-live='true'] .vc-tiles { grid-column: 2; }
-.lb-voice-card .vc-bar[data-live='true'] .vc-controls { grid-column: 3; }
-.lb-voice-card .vc-bar:not([data-live]) {
-  grid-template-columns: 1fr auto; align-items: center;
+.lb-seats-card .vc-hang { background: #e2574c; border-color: #e2574c; color: #ffffff; }
+.lb-head .vc-mine-count { color: rgba(16, 49, 75, 0.55); }
+.lb-seat .vmark {
+  position: absolute; top: 8px; left: 8px;
+  background: #ffffff; border-color: rgba(8, 44, 70, 0.14); color: rgba(16, 49, 75, 0.6);
 }
-.lb-voice-card .vc-bar:not([data-live]) .vc-error { grid-column: 1 / -1; }
-.lb-voice-card .vc-bar { border-bottom: 0; padding: 0; }
-.lb-voice-card .vc-head { font-size: 15px; color: var(--ink, #10314b); }
-.lb-voice-card .vc-tile { background: rgba(8, 44, 70, 0.06); }
-.lb-voice-card .vc-name { color: rgba(16, 49, 75, 0.7); }
-.lb-voice-card .vc-btn { background: #ffffff; border-color: rgba(8, 44, 70, 0.14); color: #10314b; }
-.lb-voice-card .vc-hang { background: #e2574c; border-color: #e2574c; color: #ffffff; }
-.lb-voice-card .vc-bar > .btn {
-  justify-self: end; min-height: 40px; padding: 0 18px; border-radius: 12px;
-  font-weight: 800; color: #ffffff; border: 0;
-  background: linear-gradient(180deg, #3cc9e4, var(--sea));
-  box-shadow: 0 4px 0 var(--sea-deep);
-}
-.lb-voice-card .vc-bar > .btn:disabled { opacity: 0.6; box-shadow: none; }
+.lb-seat .vmark[data-on] { color: #10314b; }
+.lb-seat .vmark[data-loud] { color: #2f9e52; border-color: #42c26b; }
+.lb-seat .vmark:not([data-on]) { color: #e2574c; }

@@ -16,7 +16,7 @@ import { Results } from './Results';
 import { PlayerRail } from './PlayerRail';
 import { CharacterAvatar } from './characters';
 import { SidePanel } from './SidePanel';
-import { MicButton } from './VoiceBar';
+import { MicButton, useVoiceCall } from './voice';
 import { TradeDialog } from './TradeDialog';
 
 // The boards and their painters are only needed once a game starts.
@@ -50,6 +50,8 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
   const panelMin = useUI((s) => s.panelMin);
   const setHighlight = useUI((s) => s.setHighlight);
   const clearHighlight = useUI((s) => s.clearHighlight);
+
+  useVoiceCall();
 
   const me = state.players.find((p) => p.id === playerId);
   const turnPlayer = state.players.find((p) => p.id === state.turn.playerId);

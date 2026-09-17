@@ -5,7 +5,7 @@ import { send } from '@/net/socket';
 import { play } from '@/audio/sfx';
 import { leaveTable, useGame } from '@/store/game';
 import { Backdrop } from './Backdrop';
-import { VoiceBar } from './VoiceBar';
+import { VoiceControls, VoiceMark, useVoiceCall } from './voice';
 import { CHARACTERS, CharacterArt, CharacterAvatar } from './characters';
 
 interface Props { state: GameState; playerId: string }
@@ -58,6 +58,8 @@ export function Lobby({ state, playerId }: Props) {
     }
   };
 
+  useVoiceCall();
+
   const startLabel = state.players.length < 2
     ? 'Waiting for players…'
     : everyoneReady ? 'Start the game' : 'Waiting for everyone to be ready';
@@ -98,16 +100,12 @@ export function Lobby({ state, playerId }: Props) {
           </div>
         </section>
 
-        {/* Voice and video — only at tables made with friends */}
-        <section className="sp-card lb-voice-card" aria-label="Voice chat">
-          <VoiceBar />
-        </section>
-
         {/* Seats */}
         <section className="sp-card lb-seats-card" aria-label="Players">
           <div className="lb-head">
             <h2>Players</h2>
             <span className="sp-muted">{readyCount} of {state.players.length} ready</span>
+            <VoiceControls />
           </div>
           <div className="lb-seats">
             {seats.map((p, i) => p ? (
@@ -116,6 +114,7 @@ export function Lobby({ state, playerId }: Props) {
                 <CharacterAvatar token={p.token} color={p.color} size={58} />
                 <b className="nm">{p.name}</b>
                 <small>{p.id === playerId ? 'You' : CHARACTERS[p.token]?.name}</small>
+                <VoiceMark playerId={p.id} name={p.name} />
                 <span className="lb-tags">
                   {p.isHost && <span className="lb-tag lb-tag-host">Host</span>}
                   {!p.isHost && (p.ready

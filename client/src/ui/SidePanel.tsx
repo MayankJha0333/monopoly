@@ -6,7 +6,6 @@ import { send } from '@/net/socket';
 import { useGame } from '@/store/game';
 import { useUI } from '@/store/ui';
 import { CharacterAvatar } from './characters';
-import { VoiceBar } from './VoiceBar';
 
 type Tab = 'log' | 'chat' | 'trades';
 
@@ -132,7 +131,6 @@ export function SidePanel({ state, playerId, onTile }: Props) {
 
   return (
     <aside className="card side">
-      <VoiceBar compact />
       <div className="tabs">
         <button className="tab" data-on={tab === 'log'} onClick={() => setTab('log')}>Log</button>
         <button className="tab" data-on={tab === 'chat'} onClick={() => setTab('chat')}>

@@ -511,85 +511,42 @@ select.select {
   .typing-dots i, .dock-typing { animation: none; }
 }
 
-/* Voice chat (private tables only) */
-.vc-bar {
-  display: grid; gap: 8px; padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
+/* Voice chat (private tables only). The call lives on the player cards, so
+   all that is left here is a microphone mark and your own two buttons. */
+.vmark {
+  display: inline-grid; place-items: center; width: 20px; height: 20px;
+  border-radius: 50%; border: 1px solid var(--line); background: var(--panel);
+  color: var(--muted); flex: 0 0 auto; padding: 0; cursor: default;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
-/* In the side panel the bar is one slim row until a call is running. */
-.vc-bar[data-compact]:not([data-live]) {
-  grid-template-columns: 1fr auto; align-items: center;
+button.vmark { cursor: pointer; }
+button.vmark:hover { color: #ffb4ad; border-color: #e2574c; }
+.vmark[data-on] { color: var(--text); }
+.vmark[data-loud] {
+  color: #42c26b; border-color: #42c26b; box-shadow: 0 0 0 3px rgba(66, 194, 107, 0.25);
 }
-.vc-bar[data-compact]:not([data-live]) .vc-error { grid-column: 1 / -1; }
-.vc-bar[data-compact] .vc-tile { width: 62px; }
-.vc-bar[data-compact] .vc-video { width: 54px; height: 38px; }
-.vc-bar[data-compact] .vc-btn { width: 34px; height: 34px; }
-.vc-head {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 700; color: var(--text);
-}
-.vc-head svg { color: var(--info); }
-.vc-count { margin-left: auto; font-weight: 500; font-size: 12px; color: var(--muted); }
-.vc-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
-.vc-tile {
-  position: relative; width: 74px; padding: 6px 4px 5px;
-  display: grid; justify-items: center; gap: 4px;
-  border-radius: 12px; border: 2px solid transparent;
-  background: var(--panel-2, rgba(255, 255, 255, 0.06));
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.vc-tile[data-speaking] {
-  border-color: var(--good); box-shadow: 0 0 0 3px rgba(66, 194, 107, 0.22);
-}
-.vc-video {
-  width: 66px; height: 44px; object-fit: cover; border-radius: 8px; background: #06263c;
-  transform: scaleX(-1);
-}
-.vc-name {
-  max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 11px; color: var(--muted);
-}
-.vc-muted {
-  position: absolute; top: 4px; right: 4px; display: grid; place-items: center;
-  width: 18px; height: 18px; border-radius: 50%; background: var(--danger, #e2574c); color: #fff;
-}
-.vc-controls { display: flex; gap: 8px; }
+.vmark:not([data-on]) { color: #e2574c; }
+
+.vc-mine { display: inline-flex; align-items: center; gap: 6px; }
+.vc-mine-count { font-size: 11.5px; color: var(--muted); }
 .vc-btn {
-  display: grid; place-items: center; width: 38px; height: 38px;
+  display: grid; place-items: center; width: 34px; height: 34px;
   border-radius: 50%; border: 1px solid var(--line);
   background: var(--panel); color: var(--text); cursor: pointer;
 }
 .vc-btn:hover { border-color: var(--info); }
 .vc-btn[data-off] { background: rgba(226, 87, 76, 0.16); border-color: #e2574c; color: #ffb4ad; }
-.vc-hang { margin-left: auto; background: #e2574c; border-color: #e2574c; color: #fff; }
+.vc-btn[data-loud] { box-shadow: 0 0 0 3px rgba(66, 194, 107, 0.3); }
+.vc-hang { background: #e2574c; border-color: #e2574c; color: #fff; }
 .vc-hang svg { transform: rotate(135deg); }
-.vc-error { margin: 0; font-size: 12px; color: #ffb4ad; }
-.vc-tap { width: 100%; }
-.vc-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
-.vc-meter {
-  flex: 0 0 56px; height: 6px; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14); overflow: hidden;
+.vc-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 34px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
-.vc-meter i {
-  display: block; height: 100%; width: 0;
-  background: linear-gradient(90deg, #42c26b, #ffc93c);
-  transition: width 0.12s linear;
-}
-.vc-hint { margin: 0; font-size: 11.5px; color: var(--muted); }
-.vc-off { opacity: 0.75; }
-/* Host's "silence this person" button on a tile */
-.vc-silence {
-  position: absolute; bottom: 3px; right: 3px;
-  display: grid; place-items: center; width: 18px; height: 18px;
-  border-radius: 50%; border: 1px solid var(--line);
-  background: var(--panel); color: var(--muted); cursor: pointer; opacity: 0;
-  transition: opacity 0.12s ease;
-}
-.vc-tile:hover .vc-silence, .vc-silence:focus-visible { opacity: 1; }
-.vc-silence:hover { color: #ffb4ad; border-color: #e2574c; }
-/* Microphone button in the game's top bar */
-.vc-mic-btn[data-off] { background: rgba(226, 87, 76, 0.18); border-color: #e2574c; color: #ffb4ad; }
-.vc-mic-btn[data-live] { box-shadow: 0 0 0 2px rgba(66, 194, 107, 0.55); }
+.vc-pill:hover { border-color: var(--info); }
+.vc-mine[data-compact] .vc-btn, .vc-pill[data-compact] { height: 32px; width: auto; }
 .vc-off .vc-hint { max-width: 46ch; }
 .lb-voice-card .vc-status, .lb-voice-card .vc-hint { color: rgba(16, 49, 75, 0.68); }
 .lb-voice-card .vc-meter { background: rgba(8, 44, 70, 0.14); }
