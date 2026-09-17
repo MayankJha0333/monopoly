@@ -42,7 +42,13 @@ function until(get: () => GameState | null, pred: (s: GameState) => boolean, ms 
 
 async function main() {
   const server = spawn('npx', ['tsx', 'server/index.ts'], {
-    env: { ...process.env, PORT: String(PORT), DB_FILE: ':memory:', NODE_ENV: 'test', BOT_PACE: '0.25' },
+    env: {
+      ...process.env, PORT: String(PORT), DB_FILE: ':memory:', NODE_ENV: 'test', BOT_PACE: '0.25',
+      // Stand-in keys: enough to sign a pass, and no call is ever placed here.
+      LIVEKIT_URL: 'wss://test.livekit.cloud',
+      LIVEKIT_API_KEY: 'APItestkey',
+      LIVEKIT_API_SECRET: 'test-secret-value-long-enough-for-hmac',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
     detached: true,
   });
@@ -214,6 +220,68 @@ async function main() {
   await wait(300);
   check('no reward for leaving early', !rewarded);
   q.close();
+
+  // ---------------------------------------------------------------- chat, typing and voice
+  const c1 = connect();
+  const c2 = connect();
+  const heard: { playerId: string; name: string }[] = [];
+  const box2: { s: GameState | null } = { s: null };
+  c2.on('typing', (t: { playerId: string; name: string }) => heard.push(t));
+  c2.on('state', (s: GameState) => { box2.s = s; });
+  const ownTyping: unknown[] = [];
+  c1.on('typing', (t: unknown) => ownTyping.push(t));
+  let voiceReady: boolean | null = null;
+  c1.on('voice:ready', (on: boolean) => { voiceReady = on; });
+  await new Promise<void>((r) => c1.on('connect', () => r()));
+  await new Promise<void>((r) => c2.on('connect', () => r()));
+
+  const table = await ask<JoinResult>(c1, 'room:create',
+    { name: 'Talky', token: 'hat', color: '#e94b3c', settings: { name: 'Chat table' } });
+  await ask<JoinResult>(c2, 'room:join',
+    { code: table.state!.code, name: 'Listener', token: 'dog', color: '#2f80ed' });
+
+  c1.emit('chat:send', { text: '  hello table  ' });
+  await until(() => box2.s, (s) => s.chat.length === 1);
+  const msg = box2.s?.chat[0];
+  check('chat reaches the other player', msg?.text === 'hello table', msg?.text);
+  check('chat carries who said it', msg?.name === 'Talky' && !!msg?.playerId);
+
+  c1.emit('chat:send', { text: '   ' });
+  c1.emit('chat:send', { text: 'x'.repeat(400) });
+  await wait(300);
+  check('empty messages are dropped', box2.s?.chat.length === 2, `${box2.s?.chat.length} messages`);
+  check('long messages are cut to 240', (box2.s?.chat[1]?.text.length ?? 0) === 240);
+
+  c1.emit('chat:typing');
+  await wait(300);
+  check('typing reaches the other player', heard.length === 1 && heard[0]?.name === 'Talky');
+  check('typing is not echoed to the sender', ownTyping.length === 0);
+
+  check('the server announces whether voice is available', voiceReady === true);
+  const pass = await ask<{ ok: boolean; url?: string; token?: string; room?: string; error?: string }>(c1, 'voice:token');
+  check('a private table gets a voice pass', pass.ok && !!pass.token, pass.error);
+  check('the pass points at the LiveKit server', pass.url === 'wss://test.livekit.cloud');
+  check('everyone at a table shares one call', pass.room === `rentrush-${table.state!.code}`);
+  const claims = JSON.parse(Buffer.from((pass.token ?? '..').split('.')[1] ?? '', 'base64url').toString() || '{}');
+  check('the pass only opens this table', claims?.video?.room === `rentrush-${table.state!.code}`);
+  check('the pass may not create or manage rooms', !claims?.video?.roomCreate && !claims?.video?.roomAdmin);
+  check('the pass expires', typeof claims?.exp === 'number' && claims.exp > Math.floor(Date.now() / 1000));
+
+  c1.emit('room:leave');
+  await wait(200);
+  const noSeat = await ask<{ ok: boolean; error?: string }>(c1, 'voice:token');
+  check('no pass without a seat at the table', !noSeat.ok);
+  c1.close();
+  c2.close();
+
+  // Quick Play seats solos together, so it stays text-only.
+  const solo = connect();
+  await new Promise<void>((r) => solo.on('connect', () => r()));
+  await ask<JoinResult>(solo, 'match:join', { name: 'Solo', token: 'car', color: '#f2c14e' });
+  const quickPass = await ask<{ ok: boolean; error?: string }>(solo, 'voice:token');
+  check('quick play has no voice chat', !quickPass.ok, quickPass.error);
+  solo.emit('room:leave');
+  solo.close();
 
   const health = await (await fetch(`${URL}/healthz`)).json() as { ok: boolean };
   check('health check answers', health.ok === true);

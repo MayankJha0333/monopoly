@@ -527,6 +527,7 @@
   grid-template-columns: 1.35fr 1fr;
   grid-template-areas:
     'invite invite'
+    'voice voice'
     'seats rules'
     'you rules';
   gap: 16px;
@@ -553,6 +554,7 @@
 .lb-code .code { font-family: Bungee, Outfit, sans-serif; font-size: clamp(30px, 4vw, 42px); letter-spacing: 0.18em; color: var(--ink); line-height: 1.1; }
 .lb-invite-actions { display: grid; gap: 8px; }
 
+.lb-voice-card { grid-area: voice; }
 .lb-seats-card { grid-area: seats; }
 .lb-seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
 .lb-seat {
@@ -639,7 +641,7 @@
 .lb-go { min-width: 280px; }
 
 @media (max-width: 900px) {
-  .lb-main { grid-template-columns: 1fr; grid-template-areas: 'invite' 'seats' 'you' 'rules'; padding: 8px 16px 16px; }
+  .lb-main { grid-template-columns: 1fr; grid-template-areas: 'invite' 'voice' 'seats' 'you' 'rules'; padding: 8px 16px 16px; }
   .lb-invite { grid-template-columns: 1fr; justify-items: start; }
   .lb-invite-actions { grid-template-columns: repeat(3, auto); }
   .lb-go { min-width: 0; width: 100%; }
@@ -746,3 +748,29 @@
 }
 
 @keyframes dockUp { from { opacity: 0; transform: translateY(12px); } }
+
+/* Voice card on the friends lobby page */
+.lb-voice-card { padding: 14px 16px; grid-area: voice; }
+.lb-voice-card .vc-bar[data-live='true'] {
+  grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+}
+.lb-voice-card .vc-bar[data-live='true'] .vc-head { grid-column: 1; }
+.lb-voice-card .vc-bar[data-live='true'] .vc-tiles { grid-column: 2; }
+.lb-voice-card .vc-bar[data-live='true'] .vc-controls { grid-column: 3; }
+.lb-voice-card .vc-bar:not([data-live]) {
+  grid-template-columns: 1fr auto; align-items: center;
+}
+.lb-voice-card .vc-bar:not([data-live]) .vc-error { grid-column: 1 / -1; }
+.lb-voice-card .vc-bar { border-bottom: 0; padding: 0; }
+.lb-voice-card .vc-head { font-size: 15px; color: var(--ink, #10314b); }
+.lb-voice-card .vc-tile { background: rgba(8, 44, 70, 0.06); }
+.lb-voice-card .vc-name { color: rgba(16, 49, 75, 0.7); }
+.lb-voice-card .vc-btn { background: #ffffff; border-color: rgba(8, 44, 70, 0.14); color: #10314b; }
+.lb-voice-card .vc-hang { background: #e2574c; border-color: #e2574c; color: #ffffff; }
+.lb-voice-card .vc-bar > .btn {
+  justify-self: end; min-height: 40px; padding: 0 18px; border-radius: 12px;
+  font-weight: 800; color: #ffffff; border: 0;
+  background: linear-gradient(180deg, #3cc9e4, var(--sea));
+  box-shadow: 0 4px 0 var(--sea-deep);
+}
+.lb-voice-card .vc-bar > .btn:disabled { opacity: 0.6; box-shadow: none; }

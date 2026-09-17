@@ -309,6 +309,23 @@ export interface ClientToServer {
   'trade:cancel': (p: { id: string }) => void;
 
   'chat:send': (p: { text: string }) => void;
+  /** "still typing" ping, sent at most a few times a second while typing */
+  'chat:typing': () => void;
+
+  /** Voice/video at a private table: asks for a short-lived LiveKit pass. */
+  'voice:token': (cb: (r: VoiceTicket) => void) => void;
+}
+
+/** Answer to `voice:token`: everything the client needs to join the call. */
+export interface VoiceTicket {
+  ok: boolean;
+  /** LiveKit server address, e.g. wss://something.livekit.cloud */
+  url?: string;
+  /** Short-lived pass for this player at this table only. */
+  token?: string;
+  /** LiveKit room name, so every player at the table lands in the same call. */
+  room?: string;
+  error?: string;
 }
 
 export interface ServerToClient {
@@ -323,4 +340,8 @@ export interface ServerToClient {
   'announce': (a: Announcement) => void;
   /** players online right now, for the home screen */
   'online': (n: number) => void;
+  /** someone at the table is typing a chat message */
+  'typing': (p: { playerId: string; name: string }) => void;
+  /** whether voice and video are available on this server */
+  'voice:ready': (on: boolean) => void;
 }

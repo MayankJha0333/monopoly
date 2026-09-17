@@ -5,6 +5,7 @@ import { send } from '@/net/socket';
 import { play } from '@/audio/sfx';
 import { leaveTable, useGame } from '@/store/game';
 import { Backdrop } from './Backdrop';
+import { VoiceBar } from './VoiceBar';
 import { CHARACTERS, CharacterArt, CharacterAvatar } from './characters';
 
 interface Props { state: GameState; playerId: string }
@@ -95,6 +96,11 @@ export function Lobby({ state, playerId }: Props) {
             <button className="sp-btn sp-btn-sm" onClick={() => copy('link')}>{copied === 'link' ? 'Copied!' : 'Copy invite'}</button>
             <button className="sp-btn sp-btn-sm sp-btn-sea" onClick={share}>Share</button>
           </div>
+        </section>
+
+        {/* Voice and video — only at tables made with friends */}
+        <section className="sp-card lb-voice-card" aria-label="Voice chat">
+          <VoiceBar />
         </section>
 
         {/* Seats */}

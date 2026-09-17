@@ -7,6 +7,7 @@ import { getMusicVolume, isMuted, isMusicOn, play, setMuted, setMusicEnabled, se
 import { useAuth } from '@/store/auth';
 import { useGame } from '@/store/game';
 import { usePrefs, webglAvailable } from '@/store/prefs';
+import { disableNotifications, enableNotifications, notifyState, type NotifyState } from '@/lib/notify';
 import { CharacterAvatar } from './characters';
 import { Dialog } from './Dialog';
 
@@ -195,6 +196,7 @@ export function LeaderboardDialog({ onClose, onSignup, onPlay }: {
 }
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
+  const [notif, setNotif] = useState<NotifyState>(notifyState());
   const view = usePrefs((s) => s.view);
   const quality = usePrefs((s) => s.quality);
   const setView = usePrefs((s) => s.setView);
@@ -220,6 +222,22 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
             <button role="radio" aria-checked={quality === 'high'} data-on={quality === 'high'} onClick={() => setQuality('high')}>High</button>
             <button role="radio" aria-checked={quality === 'low'} data-on={quality === 'low'} onClick={() => setQuality('low')}>Low</button>
           </div>
+        </div>
+        <div className="sp-setting">
+          <div>
+            <b>Notifications</b>
+            <small>
+              {notif === 'unsupported' ? 'This browser cannot show notifications.'
+                : notif === 'blocked' ? 'Blocked. Allow notifications for this site in your browser settings.'
+                  : 'Tells you it is your turn, or that someone wrote, while the game is in another tab.'}
+            </small>
+          </div>
+          <button className="sp-toggle" role="switch" aria-checked={notif === 'on'} data-on={notif === 'on'}
+            aria-label="Notifications" disabled={notif === 'unsupported' || notif === 'blocked'}
+            onClick={async () => {
+              if (notif === 'on') { disableNotifications(); setNotif('off'); return; }
+              setNotif(await enableNotifications());
+            }} />
         </div>
         <div className="sp-setting">
           <div><b>Sound effects</b><small>Dice, coins and card sounds.</small></div>

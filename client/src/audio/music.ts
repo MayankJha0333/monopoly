@@ -135,11 +135,22 @@ class IslandBreeze {
     for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
     this.noise = n;
 
-    document.addEventListener('visibilitychange', () => {
+    // Silence while the game is not the window being used. `visibilitychange`
+    // only covers another tab or a minimised window — on a desktop with the
+    // game behind another window the page still counts as visible, which is
+    // how music ends up playing from a game nobody is looking at. Focus
+    // covers that case.
+    const active = () => document.visibilityState === 'visible' && document.hasFocus();
+    const sync = () => {
       if (!this.ctx) return;
-      if (document.hidden) void this.ctx.suspend();
-      else if (this.playing) void this.ctx.resume();
-    });
+      if (active()) { if (this.playing) void this.ctx.resume(); }
+      else void this.ctx.suspend();
+    };
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('focus', sync);
+    window.addEventListener('blur', sync);
+    // Closing or navigating away: stop for good, do not fade.
+    window.addEventListener('pagehide', () => { this.playing = false; void this.ctx?.suspend(); });
     return true;
   }
 

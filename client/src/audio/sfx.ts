@@ -1,4 +1,4 @@
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { islandBreeze } from './music';
 
 /**
@@ -190,3 +190,19 @@ export function setMuted(next: boolean) {
 }
 
 export const isMuted = () => muted;
+
+/**
+ * No sound at all while the game is not the window in use — another tab,
+ * another app in front, or a page being closed.
+ */
+if (typeof window !== 'undefined') {
+  const sync = () => {
+    const active = document.visibilityState === 'visible' && document.hasFocus();
+    try { Howler.mute(!active || muted); } catch { /* audio is a nicety */ }
+  };
+  document.addEventListener('visibilitychange', sync);
+  window.addEventListener('focus', sync);
+  window.addEventListener('blur', sync);
+  window.addEventListener('pagehide', () => { try { Howler.mute(true); } catch { /* ignore */ } });
+  sync();
+}

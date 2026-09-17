@@ -429,8 +429,12 @@ select.select {
 /* Side panel */
 .side {
   grid-column: 3; grid-row: 2;
-  display: grid; grid-template-rows: auto 1fr; overflow: hidden;
+  /* Voice bar (when there is one) and tabs keep their height; whatever is
+     below fills the rest, so the chat box is never left floating. */
+  display: flex; flex-direction: column; overflow: hidden;
 }
+.side > .vc-bar, .side > .tabs { flex: 0 0 auto; }
+.side > .panel-body, .side > .chat-wrap { flex: 1 1 auto; min-height: 0; }
 .tabs { display: flex; gap: 3px; padding: 7px 7px 0; align-items: flex-end; }
 .tab {
   flex: 1; min-height: 34px; border-radius: 9px 9px 0 0;
@@ -480,6 +484,86 @@ select.select {
 .chat-msg { font-size: 13px; padding: 3px 6px; }
 .chat-msg .who { font-weight: 700; margin-right: 6px; }
 .chat-form { display: flex; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--line); }
+
+/* "Ana is typing…" — a fixed-height line, so the composer never jumps. */
+.chat-wrap { grid-template-rows: 1fr auto auto; }
+.typing-line {
+  display: flex; align-items: center; gap: 7px; min-height: 20px;
+  padding: 0 12px; font-size: 12px; color: var(--muted);
+}
+.typing-dots { display: inline-flex; gap: 3px; }
+.typing-dots i {
+  width: 4px; height: 4px; border-radius: 50%; background: currentColor;
+  animation: typing-bounce 1.1s infinite ease-in-out;
+}
+.typing-dots i:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+.dock-typing {
+  position: absolute; top: 6px; right: 6px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--info);
+  animation: typing-bounce 1.1s infinite ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots i, .dock-typing { animation: none; }
+}
+
+/* Voice chat (private tables only) */
+.vc-bar {
+  display: grid; gap: 8px; padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+/* In the side panel the bar is one slim row until a call is running. */
+.vc-bar[data-compact]:not([data-live]) {
+  grid-template-columns: 1fr auto; align-items: center;
+}
+.vc-bar[data-compact]:not([data-live]) .vc-error { grid-column: 1 / -1; }
+.vc-bar[data-compact] .vc-tile { width: 62px; }
+.vc-bar[data-compact] .vc-video { width: 54px; height: 38px; }
+.vc-bar[data-compact] .vc-btn { width: 34px; height: 34px; }
+.vc-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+.vc-head svg { color: var(--info); }
+.vc-count { margin-left: auto; font-weight: 500; font-size: 12px; color: var(--muted); }
+.vc-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.vc-tile {
+  position: relative; width: 74px; padding: 6px 4px 5px;
+  display: grid; justify-items: center; gap: 4px;
+  border-radius: 12px; border: 2px solid transparent;
+  background: var(--panel-2, rgba(255, 255, 255, 0.06));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.vc-tile[data-speaking] {
+  border-color: var(--good); box-shadow: 0 0 0 3px rgba(66, 194, 107, 0.22);
+}
+.vc-video {
+  width: 66px; height: 44px; object-fit: cover; border-radius: 8px; background: #06263c;
+  transform: scaleX(-1);
+}
+.vc-name {
+  max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11px; color: var(--muted);
+}
+.vc-muted {
+  position: absolute; top: 4px; right: 4px; display: grid; place-items: center;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--danger, #e2574c); color: #fff;
+}
+.vc-controls { display: flex; gap: 8px; }
+.vc-btn {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel); color: var(--text); cursor: pointer;
+}
+.vc-btn:hover { border-color: var(--info); }
+.vc-btn[data-off] { background: rgba(226, 87, 76, 0.16); border-color: #e2574c; color: #ffb4ad; }
+.vc-hang { margin-left: auto; background: #e2574c; border-color: #e2574c; color: #fff; }
+.vc-hang svg { transform: rotate(135deg); }
+.vc-error { margin: 0; font-size: 12px; color: #ffb4ad; }
 
 /* Action bar */
 .actions {
@@ -708,7 +792,10 @@ select.select {
   .rail .pcard { min-width: 172px; flex: none; padding: 9px 10px 9px 13px; }
   .pcard:hover { transform: none; }
   .trade-btn { opacity: 1; height: auto; min-height: 30px; padding: 0 12px; border: 1px solid var(--line); }
-  .side { grid-column: 1; grid-row: 3; align-self: end; max-height: 30vh; }
+  /* Taller on phones than it used to be: the voice row and the typing line
+     both take a slice, and the messages still need room to read. */
+  .side { grid-column: 1; grid-row: 3; align-self: end; max-height: 42vh; }
+  .side .panel-body { min-height: 84px; }
   .actions { grid-column: 1; grid-row: 4; }
   .turn-banner { display: none; }
 }

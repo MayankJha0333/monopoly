@@ -3,8 +3,10 @@ import { tile } from '@shared/board';
 import { money } from '@shared/rules';
 import type { GameState, LogKind, TradeOffer } from '@shared/types';
 import { send } from '@/net/socket';
+import { useGame } from '@/store/game';
 import { useUI } from '@/store/ui';
 import { CharacterAvatar } from './characters';
+import { VoiceBar } from './VoiceBar';
 
 type Tab = 'log' | 'chat' | 'trades';
 
@@ -39,6 +41,8 @@ export function SidePanel({ state, playerId, onTile }: Props) {
   const minimized = useUI((s) => s.panelMin);
   const setMinimized = useUI((s) => s.setPanelMin);
   const [draft, setDraft] = useState('');
+  const typing = useGame((s) => s.typing);
+  const lastTypedAt = useRef(0);
   const [unreadChat, setUnreadChat] = useState(0);
   const [unreadLog, setUnreadLog] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
@@ -82,6 +86,7 @@ export function SidePanel({ state, playerId, onTile }: Props) {
 
   if (minimized) {
     const badges: Record<Tab, number> = { log: unreadLog, chat: unreadChat, trades: forMe.length };
+    const someoneTyping = Object.keys(typing).some((id) => id !== playerId);
     return (
       <nav className="side-dock" aria-label="Log, chat and trades">
         {(['log', 'chat', 'trades'] as Tab[]).map((t) => (
@@ -89,6 +94,7 @@ export function SidePanel({ state, playerId, onTile }: Props) {
             data-alert={(t !== 'log' && badges[t] > 0) || undefined}>
             <DockIcon d={ICONS[t]} />
             <span className="dock-label">{LABELS[t]}</span>
+            {t === 'chat' && someoneTyping && <span className="dock-typing" aria-label="someone is typing" />}
             {badges[t] > 0 && <span className="dock-badge">{badges[t] > 99 ? '99+' : badges[t]}</span>}
           </button>
         ))}
@@ -102,10 +108,31 @@ export function SidePanel({ state, playerId, onTile }: Props) {
     if (!text) return;
     send('chat:send', { text });
     setDraft('');
+    lastTypedAt.current = 0;
   };
+
+  // One "typing" ping every 1.5 seconds while someone is writing — enough to
+  // keep the line alive at the other end without chattering at the server.
+  const onDraft = (value: string) => {
+    setDraft(value);
+    const now = Date.now();
+    if (value.trim() && now - lastTypedAt.current > 1500) {
+      lastTypedAt.current = now;
+      send('chat:typing');
+    }
+  };
+
+  const others = Object.entries(typing)
+    .filter(([id]) => id !== playerId)
+    .map(([, v]) => v.name);
+  const typingLine = others.length === 0 ? null
+    : others.length === 1 ? `${others[0]} is typing…`
+      : others.length === 2 ? `${others[0]} and ${others[1]} are typing…`
+        : 'Several players are typing…';
 
   return (
     <aside className="card side">
+      <VoiceBar compact />
       <div className="tabs">
         <button className="tab" data-on={tab === 'log'} onClick={() => setTab('log')}>Log</button>
         <button className="tab" data-on={tab === 'chat'} onClick={() => setTab('chat')}>
@@ -152,9 +179,17 @@ export function SidePanel({ state, playerId, onTile }: Props) {
               </div>
             ))}
           </div>
+          <div className="typing-line" aria-live="polite">
+            {typingLine && (
+              <>
+                <span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>
+                {typingLine}
+              </>
+            )}
+          </div>
           <form className="chat-form" onSubmit={submitChat}>
             <input className="input grow" value={draft} maxLength={240} placeholder="Message the table…"
-              onChange={(e) => setDraft(e.target.value)} />
+              onChange={(e) => onDraft(e.target.value)} />
             <button className="btn btn-sm" type="submit">Send</button>
           </form>
         </div>
