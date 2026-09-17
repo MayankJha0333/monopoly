@@ -1,0 +1,11 @@
+node_modules
+dist
+data
+.env
+.DS_Store
+*.log
+shots/
+test-results/
+playwright-report/
+.sync.tgz
+_backup/
