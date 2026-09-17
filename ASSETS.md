@@ -65,3 +65,9 @@ node tools/make-images.mjs
 
 It screenshots `tools/share-card.html` and `client/public/favicon.svg`, so
 changing the brand means editing those two files and running the script again.
+
+## Screenshots
+
+`docs/screenshots/*.jpg` are captures of the running game, taken with
+Playwright for the README. They are pictures *of* the game, not art used *by*
+it — nothing in `client/` or `server/` loads them.
