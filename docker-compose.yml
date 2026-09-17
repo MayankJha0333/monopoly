@@ -1,0 +1,14 @@
+services:
+  sunnyport:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: "1"
+      # COOKIE_SECURE: "0"   # only for testing over plain http
+    volumes:
+      - sunnyport-data:/data
+    restart: unless-stopped
+volumes:
+  sunnyport-data:

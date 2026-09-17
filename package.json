@@ -1,0 +1,52 @@
+{
+  "name": "sunnyport",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n server,client -c magenta,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx watch server/index.ts",
+    "dev:client": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "NODE_ENV=production NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "sim": "tsx server/sim.ts",
+    "e2e": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx server/e2e.ts",
+    "test:rules": "tsx server/rules.test.ts",
+    "test": "npm run test:rules && npm run test:auth && npm run sim 60 && npm run e2e && npm run test:ui",
+    "smoke": "playwright test tests/visual.spec.ts",
+    "test:ui": "playwright test",
+    "test:auth": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx server/auth.test.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "express": "^5.2.1",
+    "howler": "^2.2.4",
+    "nanoid": "^6.0.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "three": "^0.185.1",
+    "tsx": "^4.23.13",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/express": "^5.0.6",
+    "@types/howler": "^2.2.13",
+    "@types/node": "^26.4.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@types/three": "^0.185.4",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  },
+  "description": "Sunnyport \u2014 a real-time multiplayer property-trading board game in 3D.",
+  "engines": {
+    "node": ">=22.13"
+  }
+}
