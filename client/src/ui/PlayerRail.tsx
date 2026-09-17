@@ -4,6 +4,7 @@ import { money, netWorth, ownedIds, ownsWholeGroup } from '@shared/rules';
 import type { GameState, OwnableTile, Player } from '@shared/types';
 import { useUI } from '@/store/ui';
 import { CharacterAvatar } from './characters';
+import { VoiceMark } from './voice';
 
 interface Props {
   state: GameState;
@@ -73,6 +74,7 @@ function PlayerCard({ state, player: p, playerId, onTile, onTrade }: Props & { p
         <span className="nm grow">
           {p.name}
           {p.id === playerId && <span className="you">you</span>}
+          <VoiceMark playerId={p.id} name={p.name} />
         </span>
         <span className="cash-wrap">
           <span className="cash">{money(shown)}</span>
