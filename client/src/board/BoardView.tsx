@@ -23,7 +23,7 @@ function diceSpot(tileId: number) {
   return { x: t.cx + (mid - t.cx) * 0.44, y: t.cy + (mid - t.cy) * 0.44 };
 }
 
-const WALK_TILES_PER_SEC = 7.2;
+const WALK_TILES_PER_SEC = 4.5;
 const HOP_PX = 26;
 /** Past this many tiles a card jump reads better as a leap than a walk. */
 const MAX_WALK = 13;
@@ -155,7 +155,7 @@ export function BoardView({ state, focusTile, quality }: Props) {
       // Once the dice have landed and every token has been still for a beat,
       // the camera hands the whole board back.
       if (moving) busyUntil.current = now;
-      if (following.current && now - busyUntil.current > 700) {
+      if (following.current && now - busyUntil.current > 1100) {
         following.current = false;
         setBoardBusy(false);
         if (cam.current && !cam.current.isManual() && !holdFocus.current) cam.current.fit();
@@ -180,9 +180,9 @@ export function BoardView({ state, focusTile, quality }: Props) {
     following.current = true;
     setBoardBusy(true);
     // Hold the close-up through the throw, then through the walk that follows.
-    busyUntil.current = performance.now() + 1900;
+    busyUntil.current = performance.now() + 2400;
     // The dice land first; only then does the token set off.
-    walkGate.current = performance.now() + 1000;
+    walkGate.current = performance.now() + 1300;
     const m = motions.current.get(active.id);
     const at = pointAt(st, active.id, m?.shown ?? active.position);
     // Frame the token and the dice together — they land a little way inboard.

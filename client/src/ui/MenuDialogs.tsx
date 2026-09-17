@@ -3,7 +3,7 @@ import { levelProgress, type LeaderRow } from '@shared/progress';
 import type { JoinResult, RoomSummary, TokenId } from '@shared/types';
 import { api } from '@/net/api';
 import { createRoom, joinRoom, listRooms } from '@/net/socket';
-import { isMuted, isMusicOn, play, setMuted, setMusicEnabled } from '@/audio/sfx';
+import { getMusicVolume, isMuted, isMusicOn, play, setMuted, setMusicEnabled, setMusicVolume } from '@/audio/sfx';
 import { useAuth } from '@/store/auth';
 import { useGame } from '@/store/game';
 import { usePrefs, webglAvailable } from '@/store/prefs';
@@ -148,6 +148,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const setQuality = usePrefs((s) => s.setQuality);
   const [muted, setM] = useState(isMuted());
   const [music, setMu] = useState(isMusicOn());
+  const [volume, setVol] = useState(Math.round(getMusicVolume() * 100));
   const can3d = webglAvailable();
 
   return (
@@ -173,9 +174,15 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
             onClick={() => { const n = !muted; setMuted(n); setM(n); if (!n) play('click'); }} />
         </div>
         <div className="sp-setting">
-          <div><b>Music</b><small>The background tune during a match.</small></div>
-          <button className="sp-toggle" role="switch" aria-checked={music} data-on={music}
+          <div><b>Music</b><small>A relaxed island tune in the menus and during matches.</small></div>
+          <button className="sp-toggle" role="switch" aria-checked={music} data-on={music} aria-label="Music"
             onClick={() => { const n = !music; setMusicEnabled(n); setMu(n); }} />
+        </div>
+        <div className="sp-setting" data-off={!music || undefined}>
+          <div><b>Music volume</b><small>{volume}%</small></div>
+          <input id="music-volume" className="sp-range" type="range" min={5} max={100} step={5} value={volume}
+            disabled={!music} aria-label="Music volume"
+            onChange={(e) => { const v = Number(e.target.value); setVol(v); setMusicVolume(v / 100); }} />
         </div>
       </div>
     </Dialog>

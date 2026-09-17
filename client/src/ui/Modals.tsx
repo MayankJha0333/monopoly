@@ -127,7 +127,7 @@ export function AuctionModal({ state, playerId }: { state: GameState; playerId: 
   );
 }
 
-const CARD_SECONDS = 2.8;
+const CARD_SECONDS = 3.6;
 
 export function CardModal({ state, playerId }: { state: GameState; playerId: string | null }) {
   const busy = useUI((s) => s.boardBusy);
@@ -149,7 +149,7 @@ export function CardModal({ state, playerId }: { state: GameState; playerId: str
     <div className="scrim is-card" onClick={() => mine && send('game:acknowledgeCard')}>
       <div className="card-stage">
         <div className={`chance-card ${drawn.deck}`}>
-          <div className="kind">{drawn.deck === 'chance' ? 'CHANCE' : 'COMMUNITY CHEST'}</div>
+          <div className="kind">{drawn.deck === 'chance' ? 'SURPRISE' : 'TREASURE'}</div>
           <div className="txt">{drawn.text}</div>
           <span className="card-timer" style={{ animationDuration: `${CARD_SECONDS}s` }} />
         </div>

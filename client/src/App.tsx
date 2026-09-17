@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { rejoinRoom, socket } from '@/net/socket';
-import { play } from '@/audio/sfx';
+import { play, startMusic } from '@/audio/sfx';
 import { useAuth } from '@/store/auth';
 import { loadSession, saveSession, useGame } from '@/store/game';
 import { GameScreen } from '@/ui/GameScreen';
@@ -17,6 +17,9 @@ export default function App() {
   const tried = useRef(false);
 
   useEffect(() => { void refreshAuth(); }, [refreshAuth]);
+
+  // The island tune plays in the menus and at the table alike.
+  useEffect(() => { startMusic(); }, []);
 
   useEffect(() => {
     const onSfx = (name: string) => play(name);

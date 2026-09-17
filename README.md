@@ -57,8 +57,10 @@ sticky sessions and a shared room store before scaling out.
 3. **Matchmaking.** You are seated at the next table that is filling up. If no
    one else arrives within a few seconds, the empty seats are filled so the
    match always starts quickly. Filled seats look and play like everyone else.
-4. **Match.** Four players, 30-second turns, 15 rounds. When the final round
-   ends, the richest player wins.
+4. **Match.** Four players, 45-second turns, 15 rounds. When the final round
+   ends, the richest player wins. Big moments — a purchase, a new house, a
+   deal, someone sent to Lockup, a bankruptcy — pop up as a banner for
+   everyone at the table, once the dice and pawn have stopped moving.
 5. **Results.** Podium, XP and coins earned, level bar, and **Play again**.
 
 **Sign up** (username, email, password) at any time. A guest who signs up
@@ -88,6 +90,24 @@ the five-character code or the invite link; the host can fill empty seats.
 The server is authoritative: clients send intents (`game:roll`,
 `trade:offer`) and receive the whole state back. Seat fillers are marked only
 on the server; the state sent to clients never says which seats they are.
+
+### Music
+
+`client/src/audio/music.ts` plays "Island Breeze", a relaxed tune made live
+with the Web Audio API: pad, bass, off-beat ukulele, soft percussion and a
+steel-drum melody that is re-invented every loop so it never feels stuck.
+It starts on the first tap (browsers require that), plays in the menus and
+at the table, pauses when the tab is hidden, and has an on/off switch and a
+volume slider in Settings.
+
+### Pace
+
+The table is tuned to feel relaxed: pawns walk about four tiles a second,
+the dice hang for a moment after landing, filled seats wait for the throw
+and walk to finish and then take one to three seconds to decide, cards stay
+up long enough to read, and a finished turn passes on after nine seconds.
+Timings live at the top of `server/rooms.ts`, `client/src/board3d/Board3D.tsx`,
+`Dice3D.tsx` and `client/src/ui/ActionBar.tsx`.
 
 ### Accounts and security
 

@@ -1,4 +1,5 @@
 import { Howl } from 'howler';
+import { islandBreeze } from './music';
 
 /**
  * Sounds are synthesised into WAV data URIs at load time, so the game ships
@@ -120,130 +121,48 @@ const RECIPES: Record<string, () => Float32Array> = {
   click: () => render([{ shape: sine(1400), dur: 0.03, gain: 0.22, env: decay(16) }], 0.05),
 };
 
-let muted = localStorage.getItem('sunnyport.muted') === '1';
+let muted = (() => { try { return localStorage.getItem('sunnyport.muted') === '1'; } catch { return false; } })();
 
 /* ----------------------------------------------------------------- music */
 
-const BPM = 84;
-const BEAT = 60 / BPM;
-const BAR = BEAT * 4;
-const LOOP = BAR * 4;
-
-/** MIDI note number to hertz. */
-const hz = (note: number) => 440 * Math.pow(2, (note - 69) / 12);
-
-/** Am7 - Fmaj7 - Cmaj7 - G6, one bar each: easy lounge harmony. */
-const CHORDS: number[][] = [
-  [57, 60, 64, 67],
-  [53, 57, 60, 64],
-  [48, 55, 64, 67],
-  [55, 59, 62, 64],
-];
-
-const pluck = (k: number) => (t: number, dur: number) =>
-  Math.exp((-k * t) / dur) * Math.min(1, t * 90);
-
-function musicBed(): Float32Array {
-  const layers: Layer[] = [];
-
-  CHORDS.forEach((chord, bar) => {
-    const at = bar * BAR;
-
-    // Pad: the chord held under everything, fading in and out of each bar.
-    for (const note of chord) {
-      const f = hz(note - 12);
-      layers.push({
-        shape: (t) => Math.sin(2 * Math.PI * f * t) + 0.34 * Math.sin(4 * Math.PI * f * t),
-        env: (t, dur) => Math.sin((Math.PI * t) / dur) ** 1.4,
-        gain: 0.07, delay: at, dur: BAR,
-      });
-    }
-
-    // Bass on one and three.
-    for (const beat of [0, 2]) {
-      const f = hz(chord[0]! - 24);
-      layers.push({
-        shape: (t) => Math.sin(2 * Math.PI * f * t),
-        env: pluck(6), gain: 0.16, delay: at + beat * BEAT, dur: BEAT * 1.6,
-      });
-    }
-
-    // A soft arpeggio walking up the chord on the off-beats.
-    for (let step = 0; step < 8; step++) {
-      if (step % 2 === 1 && step !== 3) continue;
-      const note = chord[(step + bar) % chord.length]! + (step > 4 ? 12 : 0);
-      const f = hz(note);
-      layers.push({
-        shape: (t) => Math.sin(2 * Math.PI * f * t) + 0.18 * Math.sin(6 * Math.PI * f * t),
-        env: pluck(9), gain: 0.055, delay: at + step * (BEAT / 2), dur: BEAT * 0.9,
-      });
-    }
-
-    // A brushed shaker keeps time without ever asking for attention.
-    for (let beat = 0; beat < 4; beat++) {
-      layers.push({
-        shape: noise(), env: decay(26),
-        gain: beat % 2 === 1 ? 0.05 : 0.028,
-        delay: at + beat * BEAT, dur: 0.12,
-      });
-    }
-  });
-
-  return render(layers, LOOP);
-}
-
 const MUSIC_KEY = 'sunnyport.music';
-let musicOn = localStorage.getItem(MUSIC_KEY) !== '0';
-let music: Howl | null = null;
+let musicOn = (() => { try { return localStorage.getItem(MUSIC_KEY) !== '0'; } catch { return true; } })();
 let musicWanted = false;
 
-const MUSIC_VOLUME = 0.2;
-
-function ensureMusic(): Howl | null {
-  if (music) return music;
-  try {
-    music = new Howl({
-      src: [toWavUri(musicBed())],
-      format: ['wav'],
-      loop: true,
-      volume: 0,
-    });
-  } catch {
-    music = null;
-  }
-  return music;
+/** Browsers only allow sound after a tap or key press, so start on the first one. */
+function armUnlock() {
+  const go = () => {
+    if (musicWanted && musicOn && !muted) islandBreeze.start();
+    window.removeEventListener('pointerdown', go);
+    window.removeEventListener('keydown', go);
+  };
+  window.addEventListener('pointerdown', go);
+  window.addEventListener('keydown', go);
 }
+if (typeof window !== 'undefined') armUnlock();
 
-/** Starts the loop, fading it in so it never barges into the room. */
+/** Starts the background tune, fading it in. */
 export function startMusic() {
   musicWanted = true;
   if (!musicOn || muted) return;
-  // Building the loop is a moment's work, so keep it off the first paint.
-  setTimeout(() => {
-    if (!musicWanted || !musicOn || muted) return;
-    const howl = ensureMusic();
-    if (!howl) return;
-    if (!howl.playing()) howl.play();
-    howl.fade(howl.volume(), MUSIC_VOLUME, 1400);
-  }, 400);
+  islandBreeze.start();
 }
 
 export function stopMusic(keepWanted = false) {
   if (!keepWanted) musicWanted = false;
-  if (!music || !music.playing()) return;
-  music.fade(music.volume(), 0, 500);
-  const handle = music;
-  setTimeout(() => { if (handle.volume() < 0.02) handle.pause(); }, 560);
+  islandBreeze.stop();
 }
 
 export function setMusicEnabled(on: boolean) {
   musicOn = on;
-  localStorage.setItem(MUSIC_KEY, on ? '1' : '0');
-  if (on) startMusic();
+  try { localStorage.setItem(MUSIC_KEY, on ? '1' : '0'); } catch { /* private mode */ }
+  if (on) { musicWanted = true; startMusic(); }
   else stopMusic(true);
 }
 
 export const isMusicOn = () => musicOn;
+export const getMusicVolume = () => islandBreeze.getVolume();
+export const setMusicVolume = (v: number) => islandBreeze.setVolume(v);
 
 const cache = new Map<string, Howl>();
 
@@ -265,7 +184,7 @@ export function play(name: string) {
 
 export function setMuted(next: boolean) {
   muted = next;
-  localStorage.setItem('sunnyport.muted', next ? '1' : '0');
+  try { localStorage.setItem('sunnyport.muted', next ? '1' : '0'); } catch { /* private mode */ }
   if (next) stopMusic(true);
   else if (musicWanted) startMusic();
 }

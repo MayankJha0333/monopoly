@@ -462,3 +462,53 @@
   .sp-play, .sp-hero, .sp-sky .cloud { animation: none; }
   .sp-seat[data-filled='true'], .sp-results, .sp-dialog { animation: none; }
 }
+
+/* ------------------------------------------------------------ announcements */
+
+.announcer {
+  position: absolute; z-index: 30;
+  top: calc(var(--play-t) + 56px); left: 50%;
+  transform: translateX(calc(-50% + (var(--play-l) - var(--play-r)) / 2));
+  width: min(440px, calc(100vw - 32px));
+  display: grid; gap: 8px;
+  pointer-events: none;
+}
+.announce {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 18px;
+  background: rgba(255, 252, 245, 0.97);
+  color: var(--ink);
+  border-left: 6px solid var(--pc);
+  box-shadow: 0 12px 30px rgba(4, 14, 26, 0.35);
+  animation: announceIn 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both, announceOut 0.4s ease-in forwards;
+  animation-delay: 0s, 3.8s;
+}
+.announce[data-tone='bad'] { background: #fff1ee; }
+.announce[data-tone='good'] { background: #f3fff6; }
+.announce[data-mine] { box-shadow: 0 0 0 3px var(--sun), 0 12px 30px rgba(4, 14, 26, 0.35); }
+.announce-face { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; }
+.announce-icon { font-size: 28px; }
+.announce-badge {
+  position: absolute; right: -6px; bottom: -6px;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px;
+  background: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.announce-body { display: grid; min-width: 0; }
+.announce-body small { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.announce[data-tone='bad'] .announce-body small { color: var(--coral-deep); }
+.announce[data-tone='good'] .announce-body small { color: #16955a; }
+.announce-body b { font-size: 15px; line-height: 1.3; }
+@keyframes announceIn { from { opacity: 0; transform: translateY(-16px) scale(0.92); } }
+@keyframes announceOut { to { opacity: 0; transform: translateY(-8px); } }
+@media (max-width: 960px) {
+  .announcer { top: calc(var(--play-t) + 8px); transform: translateX(-50%); }
+  .announce-body b { font-size: 13.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .announce { animation: none; opacity: 1; }
+}
+
+.sp-range { width: 150px; accent-color: var(--sea); flex: none; }
+.sp-setting[data-off] { opacity: 0.5; }

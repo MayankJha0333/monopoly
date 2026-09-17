@@ -62,6 +62,8 @@ async function main() {
   b.on('state', (s: GameState) => { box.b = s; });
   a.on('notice', (m: string) => noticesA.push(m));
   let diceSeen = 0;
+  const announced: string[] = [];
+  b.on('announce', (x: { text: string }) => announced.push(x.text));
   a.on('dice', () => { diceSeen++; });
 
   await new Promise<void>((r) => a.on('connect', () => r()));
@@ -147,6 +149,7 @@ async function main() {
   check('auctions run and resolve', bidsPlaced > 0 && auctionCleared, `${bidsPlaced} bids placed`);
   check('game log is populated', (box.a?.log.length ?? 0) > 20, `${box.a?.log.length} entries`);
   check('clients agree on the turn', box.a?.turn.playerId === box.b?.turn.playerId);
+  check('other players hear about purchases', announced.some((t) => / bought /.test(t)), `${announced.length} announcements`);
   check('someone owns property', Object.values(box.a!.properties).some((p) => p.owner));
 
   a.emit('chat:send', { text: 'good game' });

@@ -17,8 +17,8 @@ const PIPS: Record<number, [number, number][]> = {
   6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]],
 };
 
-const THROW_MS = 950;
-const HOLD_MS = 900;
+const THROW_MS = 1200;
+const HOLD_MS = 1300;
 
 function Face({ value, transform }: { value: number; transform: string }) {
   return (

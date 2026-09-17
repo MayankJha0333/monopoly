@@ -189,6 +189,16 @@ export interface ChatMessage {
   text: string;
 }
 
+/** A moment every player at the table is told about. */
+export interface Announcement {
+  id: string;
+  kind: LogKind;
+  tone: 'good' | 'bad' | 'info';
+  text: string;
+  playerId?: string;
+  tileId?: number;
+}
+
 /** A card that has been drawn and is waiting to be acknowledged/animated. */
 export interface DrawnCard {
   deck: 'chance' | 'chest';
@@ -309,6 +319,8 @@ export interface ServerToClient {
   'sfx': (name: string) => void;
   /** XP and coins earned, sent to each player when a game ends */
   'reward': (r: import('./progress').MatchReward) => void;
+  /** a big moment (a purchase, someone sent to Lockup…) shown to everyone */
+  'announce': (a: Announcement) => void;
   /** players online right now, for the home screen */
   'online': (n: number) => void;
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MatchReward } from '@shared/progress';
-import type { DiceThrow, GameState, Player } from '@shared/types';
+import type { Announcement, DiceThrow, GameState, Player } from '@shared/types';
 import { socket } from '@/net/socket';
 
 const SESSION_KEY = 'sunnyport.session';
@@ -28,6 +28,8 @@ interface GameStore {
   reward: MatchReward | null;
   /** players online, for the home screen */
   online: number;
+  /** big moments waiting to be shown to everyone at the table */
+  announcements: Announcement[];
   me: () => Player | undefined;
   isMyTurn: () => boolean;
   setState: (s: GameState) => void;
@@ -46,6 +48,7 @@ export const useGame = create<GameStore>((set, get) => ({
   toasts: [],
   reward: null,
   online: 0,
+  announcements: [],
 
   me: () => {
     const { state, playerId } = get();
@@ -74,10 +77,11 @@ socket.on('notice', (m) => useGame.getState().toast(m));
 socket.on('dice', (d) => useGame.setState({ throwEvent: { ...d, at: performance.now() } }));
 socket.on('reward', (r) => useGame.setState({ reward: r }));
 socket.on('online', (n) => useGame.setState({ online: n }));
+socket.on('announce', (a) => useGame.setState((st) => ({ announcements: [...st.announcements, a].slice(-12) })));
 
 /** Leaves whatever table we are at and goes back to the menu. */
 export function leaveTable() {
   socket.emit('room:leave');
   saveSession(null);
-  useGame.setState({ state: null, playerId: null, reward: null, throwEvent: null });
+  useGame.setState({ state: null, playerId: null, reward: null, throwEvent: null, announcements: [] });
 }

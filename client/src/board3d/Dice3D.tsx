@@ -9,8 +9,8 @@ import { dieFace } from './textures';
 export interface DiceRoll { values: [number, number]; seed: number; at: number }
 
 const SIZE = 0.62;
-const THROW_MS = 1050;
-const HOLD_MS = 1400;
+const THROW_MS = 1300;
+const HOLD_MS = 1900;
 /** Box face order is +x, -x, +y, -y, +z, -z. Opposite faces add to seven. */
 const FACE_VALUES = [3, 4, 1, 6, 2, 5];
 const TOP: Record<number, [number, number, number]> = {

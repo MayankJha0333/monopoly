@@ -26,7 +26,7 @@ export interface Board3DProps {
   showcase?: boolean;
 }
 
-const WALK_TILES_PER_SEC = 6.5;
+const WALK_TILES_PER_SEC = 4.2;
 const MAX_WALK = 13;
 const HOP = 0.55;
 const FOV = 38;
@@ -320,7 +320,7 @@ function Tokens({ state, rig, choreo }: {
     }
 
     if (moving) ch.busyUntil = Math.max(ch.busyUntil, now);
-    if (ch.following && now - ch.busyUntil > 700) {
+    if (ch.following && now - ch.busyUntil > 1200) {
       ch.following = false;
       setBoardBusy(false);
       if (rig.current && !rig.current.isManual() && !ch.holdFocus) rig.current.overview();
@@ -431,8 +431,8 @@ function LiveGame({ state, focusTile, onTile, rig }: {
     const now = performance.now();
     rig.current.setManual(false);
     choreo.current.following = true;
-    choreo.current.busyUntil = now + 2000;
-    choreo.current.walkGate = now + 1150;
+    choreo.current.busyUntil = now + 2600;
+    choreo.current.walkGate = now + 1450;
     setBoardBusy(true);
     const d = diceSpot(active.position).at;
     const t = tileLayout(active.position);
