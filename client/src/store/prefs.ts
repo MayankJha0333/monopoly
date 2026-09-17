@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export type View = '3d' | '2d';
 export type Quality = 'high' | 'low';
 
-const KEY = 'sunnyport.prefs';
+const KEY = 'rentrush.prefs';
 
 export function webglAvailable(): boolean {
   try {

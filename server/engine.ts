@@ -15,7 +15,7 @@ import type {
 import { isOwnable } from '@shared/types';
 
 export const DEFAULT_SETTINGS: RoomSettings = {
-  name: 'Sunnyport table',
+  name: 'Rent Rush table',
   isPrivate: true,
   maxPlayers: 6,
   startingCash: 1500,
@@ -50,7 +50,7 @@ export function cleanSettings(raw: unknown, base: RoomSettings = DEFAULT_SETTING
   next.startingCash = Math.min(50_000, Math.max(500, Math.round(next.startingCash / 50) * 50));
   next.turnSeconds = Math.min(600, Math.max(0, Math.round(next.turnSeconds)));
   next.maxRounds = Math.min(200, Math.max(0, Math.round(next.maxRounds)));
-  next.name = String(next.name).replace(/[<>]/g, '').trim().slice(0, 32) || 'Sunnyport table';
+  next.name = String(next.name).replace(/[<>]/g, '').trim().slice(0, 32) || 'Rent Rush table';
   return next;
 }
 

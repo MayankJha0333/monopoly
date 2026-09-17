@@ -4,17 +4,106 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#19b3d1" />
-    <title>Sunnyport — the island trading game</title>
-    <meta name="description" content="Roll, trade and build your way across a sunny 3D island. Jump into a quick match in seconds or play with friends." />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2726%27 fill=%27%23ffc93c%27 stroke=%27%23ff5a4f%27 stroke-width=%276%27/%3E%3C/svg%3E" />
-    <meta property="og:title" content="Sunnyport" />
-    <meta property="og:description" content="The island trading game. Quick matches in seconds." />
+
+    <title>Rent Rush — Free Online Property Trading Board Game</title>
+    <meta name="description" content="Play Rent Rush free in your browser: a 3D multiplayer property trading board game. Roll the dice, buy streets, build houses and collect rent. Quick 4-player matches in seconds, or a private table with friends. No download." />
+    <link rel="canonical" href="https://rentrush.in/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Rent Rush" />
+    <meta property="og:title" content="Rent Rush — Free Online Property Trading Board Game" />
+    <meta property="og:description" content="Roll, buy streets, build houses and collect rent in a 3D multiplayer board game. Quick matches in seconds — free, no download." />
+    <meta property="og:url" content="https://rentrush.in/" />
+    <meta property="og:image" content="https://rentrush.in/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Rent Rush — a colourful 3D property trading board on a sunny island" />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rent Rush — Free Online Property Trading Board Game" />
+    <meta name="twitter:description" content="Roll, buy streets, build houses and collect rent. Quick 4-player matches in your browser." />
+    <meta name="twitter:image" content="https://rentrush.in/og.png" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Bungee&display=swap" rel="stylesheet" />
+
+    <style>
+      body { margin: 0; background: #062341; }
+      .boot {
+        min-height: 100svh; display: flex; flex-direction: column; justify-content: center;
+        gap: 14px; max-width: 760px; margin: 0 auto; padding: 32px 24px;
+        color: #eaf6ff; font-family: Outfit, system-ui, -apple-system, Segoe UI, sans-serif;
+        background: radial-gradient(120% 90% at 50% 0%, #19b3d1 0%, #0b3c63 55%, #062341 100%);
+      }
+      .boot h1 { font-size: clamp(26px, 5vw, 40px); line-height: 1.15; margin: 0; }
+      .boot p, .boot li { font-size: 17px; line-height: 1.55; margin: 0; opacity: 0.92; }
+      .boot ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+      .boot-load { opacity: 0.7; }
+    </style>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://rentrush.in/#website",
+            "url": "https://rentrush.in/",
+            "name": "Rent Rush",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "VideoGame",
+            "@id": "https://rentrush.in/#game",
+            "name": "Rent Rush",
+            "url": "https://rentrush.in/",
+            "image": "https://rentrush.in/og.png",
+            "description": "A free multiplayer property trading board game in 3D. Roll the dice, buy streets, build houses and collect rent until one player is left standing.",
+            "genre": ["Board game", "Multiplayer", "Strategy"],
+            "playMode": ["MultiPlayer", "CoOp"],
+            "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 2, "maxValue": 6 },
+            "gamePlatform": ["Web browser", "PC", "Mobile"],
+            "applicationCategory": "Game",
+            "operatingSystem": "Any",
+            "inLanguage": "en",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR", "availability": "https://schema.org/InStock" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Shown while the game loads, and read by search engines. React replaces it. -->
+    <div id="root">
+      <div class="boot">
+        <h1>Rent Rush — free online property trading board game</h1>
+        <p>
+          Roll the dice, buy streets, build houses and collect rent from everyone who lands
+          on them. Rent Rush is a free multiplayer board game that runs in your browser —
+          no download, no install.
+        </p>
+        <ul>
+          <li>Quick match: four players, about ten minutes, starts in seconds.</li>
+          <li>Private table: share a code and play with friends.</li>
+          <li>Full 3D island board, with a 2D board on slower devices.</li>
+          <li>Trade streets, build houses and hotels, mortgage, and bankrupt your rivals.</li>
+          <li>Play as a guest, or make an account to keep your level, coins and leaderboard place.</li>
+        </ul>
+        <p class="boot-load">Loading the island…</p>
+      </div>
+    </div>
+    <noscript>
+      <p style="color:#fff;text-align:center;font-family:system-ui,sans-serif">
+        Rent Rush needs JavaScript. Please turn it on to play.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

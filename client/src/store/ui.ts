@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /** 'open' only when the player chose to keep the panel open; minimized otherwise. */
-const PANEL_KEY = 'sunnyport.panel';
+const PANEL_KEY = 'rentrush.panel';
 const BUSY_MAX_MS = 9000;
 let busyTimer: ReturnType<typeof setTimeout> | null = null;
 

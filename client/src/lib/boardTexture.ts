@@ -5,7 +5,7 @@ import { paintCity } from './cityArt';
 import { paintGround } from './cityGround';
 
 /**
- * Paints the Sunnyport board face: sea-glass tiles with rounded colour caps,
+ * Paints the Rent Rush board face: sea-glass tiles with rounded colour caps,
  * set into a lagoon-teal grid. Every icon is drawn in code.
  */
 

@@ -3,7 +3,7 @@ import type { MatchReward } from '@shared/progress';
 import type { Announcement, DiceThrow, GameState, Player } from '@shared/types';
 import { socket } from '@/net/socket';
 
-const SESSION_KEY = 'sunnyport.session';
+const SESSION_KEY = 'rentrush.session';
 
 export interface Session { code: string; sessionToken: string; playerId: string }
 

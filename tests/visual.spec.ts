@@ -30,7 +30,7 @@ test('captures the screens', async ({ browser }) => {
   const page = await ctx.newPage();
 
   await page.goto('/');
-  await expect(page.getByLabel('Sunnyport')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'RENT RUSH' })).toBeVisible();
   await page.getByLabel('Nickname').fill('Ada');
   await page.waitForTimeout(3000);
   await page.screenshot({ path: `${OUT}/1-home.png` });

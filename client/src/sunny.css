@@ -1,5 +1,5 @@
 /* =====================================================================
-   Sunnyport — menus, dialogs, matchmaking, results and the 3D board.
+   Rent Rush — menus, dialogs, matchmaking, results and the 3D board.
    Bright island palette over the dark in-game HUD.
    ===================================================================== */
 
@@ -92,7 +92,7 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: calc(14px + env(safe-area-inset-top, 0px)) 24px 10px;
 }
-.sp-logo { display: flex; align-items: center; gap: 10px; }
+.sp-logo { display: flex; align-items: center; gap: 10px; margin: 0; font-weight: inherit; }
 .sp-logo-sun {
   width: 38px; height: 38px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff3b8, var(--sun) 55%, #ff9e1b);

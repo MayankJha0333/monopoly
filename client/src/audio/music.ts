@@ -45,7 +45,7 @@ const RHYTHMS: [number, number][][] = [
   [[0, 4], [6, 2], [8, 8]],
 ];
 
-const VOLUME_KEY = 'sunnyport.musicVolume';
+const VOLUME_KEY = 'rentrush.musicVolume';
 
 function mulberry(seed: number) {
   let a = seed >>> 0;
