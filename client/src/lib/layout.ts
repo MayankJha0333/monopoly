@@ -83,28 +83,101 @@ export function inwardVector(edge: Edge): [number, number] {
   }
 }
 
+export interface TokenPlace {
+  /** world position on the board top */
+  pos: [number, number, number];
+  /** size multiplier, so a crowded tile still fits everyone */
+  scale: number;
+}
+
 /**
- * Where a token stands on its tile. Tokens fan out in a small grid so a
- * crowded space stays readable.
+ * Where a token stands on its tile when `total` tokens share it.
+ *
+ * A side tile is narrow along the edge and deep toward the middle, so a crowd
+ * forms two columns running inward, stopping short of the colour band where
+ * houses stand. Pieces shrink a little as the tile fills, so nobody spills
+ * onto the next tile. Corners are square and take a 2x2 or 3x3 grid.
  */
-export function tokenSpot(tileId: number, slot: number, total: number): [number, number, number] {
+export function tokenPlace(tileId: number, slot: number, total: number): TokenPlace {
   const t = tileLayout(tileId);
   const [ix, iz] = inwardVector(t.edge);
-  const cols = total <= 2 ? total : total <= 4 ? 2 : 3;
-  const rows = Math.ceil(total / cols);
-  const col = slot % cols;
-  const row = Math.floor(slot / cols);
+  const along: [number, number] = t.edge === 'bottom' || t.edge === 'top' ? [1, 0] : [0, 1];
+  const n = Math.max(1, total);
+  const i = Math.max(0, Math.min(n - 1, slot));
 
-  const spread = t.isCorner ? 1.5 : Math.min(TILE_W * 0.62, 0.9);
-  const alongAxis: [number, number] = t.edge === 'bottom' || t.edge === 'top' ? [1, 0] : [0, 1];
-  const along = cols > 1 ? (col / (cols - 1) - 0.5) * spread : 0;
-  const depth = rows > 1 ? (row / (rows - 1) - 0.5) * 0.75 : 0;
+  let v = 0;      // offset along the edge
+  let u = 0;      // offset toward the board centre
+  let scale = 1;
 
-  // Sit slightly toward the outer half so buildings keep the inner edge.
-  const base = t.isCorner ? 0 : 0.42;
-  const x = t.x + alongAxis[0] * along + ix * (depth - base);
-  const z = t.z + alongAxis[1] * along + iz * (depth - base);
-  return [x, TOP_Y, z];
+  if (t.isCorner) {
+    const cols = n <= 1 ? 1 : n <= 4 ? 2 : 3;
+    const rows = Math.ceil(n / cols);
+    const gap = cols === 3 ? 0.95 : 1.15;
+    v = (i % cols - (cols - 1) / 2) * gap;
+    u = (Math.floor(i / cols) - (rows - 1) / 2) * gap;
+    scale = n <= 4 ? 1 : 0.82;
+    // Start and the other corners keep their centre; nudge a crowd away from the rim.
+    u += 0.1;
+  } else if (n === 1) {
+    u = -0.42;
+  } else {
+    // Two columns, as many rows as needed, between the outer rim and the band.
+    const rows = Math.ceil(n / 2);
+    const nearRim = -1.42;
+    const nearBand = 0.62;
+    const span = nearBand - nearRim;
+    const step = Math.min(0.78, span / rows);
+    const first = (nearRim + nearBand) / 2 - ((rows - 1) * step) / 2;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    // An odd last token sits in the middle of its row.
+    const alone = n % 2 === 1 && i === n - 1;
+    const colGap = n <= 2 ? 0.36 : n <= 6 ? 0.34 : 0.3;
+    v = alone ? 0 : (col === 0 ? -colGap : colGap);
+    u = first + row * step;
+    scale = n <= 2 ? 0.8 : n <= 4 ? 0.74 : n <= 6 ? 0.66 : 0.58;
+  }
+
+  return {
+    pos: [t.x + along[0] * v + ix * u, TOP_Y, t.z + along[1] * v + iz * u],
+    scale,
+  };
+}
+
+/** Where a token stands on its tile (position only). */
+export function tokenSpot(tileId: number, slot: number, total: number): [number, number, number] {
+  return tokenPlace(tileId, slot, total).pos;
+}
+
+/**
+ * Who is standing where, for laying out crowds: tokens resting on a tile, in
+ * seat order. A token that is still walking is not counted anywhere, so it
+ * slides past a crowd into the next free spot instead of pushing people out.
+ */
+export function restingOccupants(
+  players: { id: string; bankrupt: boolean }[],
+  shownOf: (id: string) => number,
+): Map<number, string[]> {
+  const out = new Map<number, string[]>();
+  for (const p of players) {
+    if (p.bankrupt) continue;
+    const shown = shownOf(p.id);
+    if (Math.abs(shown - Math.round(shown)) > 0.001) continue;
+    const tile = ((Math.round(shown) % 40) + 40) % 40;
+    const list = out.get(tile) ?? [];
+    list.push(p.id);
+    out.set(tile, list);
+  }
+  return out;
+}
+
+/** A token's place on a tile given who else is resting there. */
+export function crowdPlace(tileId: number, occupants: string[] | undefined, playerId: string): TokenPlace {
+  const list = occupants ?? [];
+  const idx = list.indexOf(playerId);
+  const slot = idx >= 0 ? idx : list.length;
+  const total = idx >= 0 ? list.length : list.length + 1;
+  return tokenPlace(tileId, slot, total);
 }
 
 /** Positions for the houses/hotel sitting on a street's colour band. */

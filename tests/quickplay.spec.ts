@@ -13,6 +13,15 @@ test.describe('quick play and accounts', () => {
     await expect(page.locator('.sp-seat[data-me]')).toContainText('Quinn');
     await waitForBoard(page);
     await expect(page.locator('.pcard')).toHaveCount(4);
+    // A fresh player starts with the log, chat and trades folded into the dock.
+    const fresh = await browser.newContext();
+    const other = await fresh.newPage();
+    await other.goto('/');
+    await other.getByLabel('Nickname').fill('Rae');
+    await other.getByRole('button', { name: /PLAY/ }).click();
+    await expect(other.locator('.side-dock')).toBeVisible({ timeout: 30_000 });
+    await expect(other.locator('.side .panel-body')).toHaveCount(0);
+    await fresh.close();
     // Every seat reads as a player; nothing is labelled as a computer.
     await expect(page.locator('.rail')).not.toContainText(/\bbot\b/i);
     await ctx.close();
