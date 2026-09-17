@@ -580,20 +580,27 @@ function Lights({ quality }: { quality: 'high' | 'low' }) {
     <>
       <hemisphereLight args={['#e8f6ff', '#6aa35a', 1.1]} />
       <ambientLight intensity={0.25} />
+      {/*
+        The sun. Its shadow map is a picture of the scene from the sun's side,
+        and how fine that picture is decides how cleanly a shadow's edge can
+        be worked out: too coarse and the edges crawl and flicker whenever the
+        camera moves. 4096 across the island's 52 units is about a centimetre
+        per step, which holds still.
+      */}
       <directionalLight
         position={[-18, 30, 14]}
         intensity={2.3}
         color="#fff3dc"
         castShadow={high}
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-27}
-        shadow-camera-right={27}
-        shadow-camera-top={27}
-        shadow-camera-bottom={-27}
-        shadow-camera-near={1}
-        shadow-camera-far={90}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.03}
+        shadow-mapSize={[4096, 4096]}
+        shadow-camera-left={-26}
+        shadow-camera-right={26}
+        shadow-camera-top={26}
+        shadow-camera-bottom={-26}
+        shadow-camera-near={4}
+        shadow-camera-far={80}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.05}
       />
     </>
   );
