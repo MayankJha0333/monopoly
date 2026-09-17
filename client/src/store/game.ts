@@ -30,6 +30,10 @@ interface GameStore {
   online: number;
   /** big moments waiting to be shown to everyone at the table */
   announcements: Announcement[];
+  /** who is typing a chat message right now, by player id, with a stamp */
+  typing: Record<string, { name: string; at: number }>;
+  /** does this server offer voice and video at private tables */
+  voiceReady: boolean;
   me: () => Player | undefined;
   isMyTurn: () => boolean;
   setState: (s: GameState) => void;
@@ -49,6 +53,8 @@ export const useGame = create<GameStore>((set, get) => ({
   reward: null,
   online: 0,
   announcements: [],
+  typing: {},
+  voiceReady: false,
 
   me: () => {
     const { state, playerId } = get();
@@ -78,10 +84,32 @@ socket.on('dice', (d) => useGame.setState({ throwEvent: { ...d, at: performance.
 socket.on('reward', (r) => useGame.setState({ reward: r }));
 socket.on('online', (n) => useGame.setState({ online: n }));
 socket.on('announce', (a) => useGame.setState((st) => ({ announcements: [...st.announcements, a].slice(-12) })));
+socket.on('voice:ready', (on) => useGame.setState({ voiceReady: on }));
+
+/** A "typing" ping counts for three seconds, then fades on its own. */
+const TYPING_MS = 3000;
+socket.on('typing', ({ playerId, name }) => {
+  useGame.setState((st) => ({ typing: { ...st.typing, [playerId]: { name, at: Date.now() } } }));
+});
+setInterval(() => {
+  const now = Date.now();
+  const { typing } = useGame.getState();
+  const live = Object.entries(typing).filter(([, v]) => now - v.at < TYPING_MS);
+  if (live.length !== Object.keys(typing).length) useGame.setState({ typing: Object.fromEntries(live) });
+}, 1000);
+
+/** Names of everyone typing right now, apart from you. */
+export function typingNames(): string[] {
+  const { typing, playerId } = useGame.getState();
+  const now = Date.now();
+  return Object.entries(typing)
+    .filter(([id, v]) => id !== playerId && now - v.at < TYPING_MS)
+    .map(([, v]) => v.name);
+}
 
 /** Leaves whatever table we are at and goes back to the menu. */
 export function leaveTable() {
   socket.emit('room:leave');
   saveSession(null);
-  useGame.setState({ state: null, playerId: null, reward: null, throwEvent: null, announcements: [] });
+  useGame.setState({ state: null, playerId: null, reward: null, throwEvent: null, announcements: [], typing: {} });
 }

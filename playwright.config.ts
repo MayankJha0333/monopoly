@@ -27,7 +27,11 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } } },
   ],
   webServer: {
-    command: `npm run build && PORT=${PORT} DB_FILE=:memory: COOKIE_SECURE=0 npm start`,
+    // Stand-in LiveKit keys so the voice-chat interface is exercised; the
+    // tests never place a call.
+    command: `npm run build && PORT=${PORT} DB_FILE=:memory: COOKIE_SECURE=0 `
+      + 'LIVEKIT_URL=wss://test.livekit.cloud LIVEKIT_API_KEY=APItestkey '
+      + "LIVEKIT_API_SECRET=test-secret-value-long-enough-for-hmac npm start",
     port: PORT,
     // Always start fresh: reusing a server can silently test a stale build.
     reuseExistingServer: false,

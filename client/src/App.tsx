@@ -3,6 +3,7 @@ import { rejoinRoom, socket } from '@/net/socket';
 import { play, startMusic } from '@/audio/sfx';
 import { useAuth } from '@/store/auth';
 import { loadSession, saveSession, useGame } from '@/store/game';
+import { useNotifications } from '@/lib/useNotifications';
 import { GameScreen } from '@/ui/GameScreen';
 import { Home } from '@/ui/Home';
 import { Lobby } from '@/ui/Lobby';
@@ -15,6 +16,10 @@ export default function App() {
   const connected = useGame((s) => s.connected);
   const refreshAuth = useAuth((s) => s.refresh);
   const tried = useRef(false);
+
+  // Watches from the menu onwards, so it catches a friend taking a seat and
+  // the game starting, not only what happens once the board is up.
+  useNotifications(state, playerId);
 
   useEffect(() => { void refreshAuth(); }, [refreshAuth]);
 

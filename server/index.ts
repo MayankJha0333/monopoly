@@ -8,6 +8,7 @@ import type { PublicUser } from '@shared/progress';
 import type { ClientToServer, JoinResult, ServerToClient, TokenId } from '@shared/types';
 import { AuthStore, COOKIE, authRouter, cleanName, parseCookies } from './auth';
 import { openDb } from './db';
+import { voiceConfigured, voiceRoom, voiceToken, voiceUrl } from './voice';
 import { RoomManager, type Room } from './rooms';
 
 const PROD = process.env.NODE_ENV === 'production';
@@ -15,6 +16,22 @@ const PORT = Number(process.env.PORT ?? 3001);
 const ROOT = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 /** Comma-separated list of allowed browser origins for the socket, in production. */
 const ORIGINS = (process.env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+/**
+ * The LiveKit server the client is allowed to reach, as both https and wss,
+ * so the page's own rules do not block voice chat.
+ */
+const VOICE_ORIGINS = (() => {
+  const raw = process.env.LIVEKIT_URL?.trim();
+  if (!raw) return '';
+  try {
+    const u = new URL(raw);
+    const host = u.host;
+    return ` wss://${host} https://${host}`;
+  } catch {
+    return '';
+  }
+})();
+
 const SECURE_COOKIES = process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE !== '0' : PROD;
 
 const db = openDb(process.env.DB_FILE);
@@ -36,7 +53,9 @@ app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // The page itself may use the camera and microphone (voice chat at private
+  // tables); nothing else on the page may, and location stays off entirely.
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=()');
   if (PROD) {
     res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
     res.setHeader('Content-Security-Policy', [
@@ -46,7 +65,7 @@ app.use((_req, res, next) => {
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
       "media-src 'self' data: blob:",
-      "connect-src 'self' ws: wss:",
+      `connect-src 'self' ws: wss:${VOICE_ORIGINS}`,
       "worker-src 'self' blob:",
       "frame-ancestors 'self'",
     ].join('; '));
@@ -121,6 +140,7 @@ io.on('connection', (socket) => {
   const data = socket.data as SocketData;
   announceOnline();
   socket.emit('online', io.engine.clientsCount);
+  socket.emit('voice:ready', voiceConfigured());
 
   // A simple token bucket stops a stuck client from flooding the engine.
   let bucket = ACTIONS_PER_SEC * 2;
@@ -313,6 +333,36 @@ io.on('connection', (socket) => {
   socket.on('trade:cancel', (p) => act((r, id) => r.game.cancelTrade(id, String(p?.id ?? ''))));
 
   socket.on('chat:send', (p) => act((r, id) => r.game.chat(id, String(p?.text ?? ''))));
+
+  // "still typing" — passed to the others at the table and nowhere else. It
+  // carries no text, and the per-socket rate limit already caps how often it
+  // can be sent.
+  socket.on('chat:typing', () => {
+    const c = ctx();
+    if (!c) return;
+    const player = c.room.state.players.find((p) => p.id === c.playerId);
+    if (!player) return;
+    socket.to(c.room.code).emit('typing', { playerId: player.id, name: player.name });
+  });
+
+  // A pass for this player, at this table only. Private tables only: Quick
+  // Play seats strangers together, so it stays text-only.
+  socket.on('voice:token', async (cb) => {
+    const reply = safeCb<{ ok: boolean; url?: string; token?: string; room?: string; error?: string }>(cb);
+    const c = ctx();
+    if (!voiceConfigured()) return reply({ ok: false, error: 'Voice chat is not set up on this server.' });
+    if (!c) return reply({ ok: false, error: 'You are not at a table.' });
+    if (c.room.quick) return reply({ ok: false, error: 'Voice chat is for tables you make with friends.' });
+    const player = c.room.state.players.find((p) => p.id === c.playerId);
+    if (!player) return reply({ ok: false, error: 'You are not at this table.' });
+    try {
+      const token = await voiceToken({ code: c.room.code, playerId: player.id, name: player.name });
+      reply({ ok: true, url: voiceUrl(), token, room: voiceRoom(c.room.code) });
+    } catch (e) {
+      console.error('[rentrush] voice token failed', e);
+      reply({ ok: false, error: 'Could not start voice chat. Try again.' });
+    }
+  });
 
   // A dropped socket keeps its seat for a grace period; the sweeper reaps
   // rooms nobody comes back to.

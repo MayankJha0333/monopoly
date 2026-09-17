@@ -104,6 +104,7 @@ Copy `.env.example` for the full list. The ones that matter in production:
 | `ALLOWED_ORIGINS` | Comma-separated origins allowed to open a socket. |
 | `TRUST_PROXY` | Set behind a load balancer so rate limits see real client IPs. |
 | `COOKIE_SECURE` | Session cookies are HTTPS-only in production; `0` turns that off for local testing. |
+| `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | Voice and video at private tables. Leave unset to hide the feature. |
 
 Deploy behind HTTPS (Render, Fly.io, Railway, a VPS with Caddy/Nginx). One
 instance holds all live tables in memory, so run a single instance, or add
@@ -165,6 +166,30 @@ and is checked by `tests/crowd.spec.ts`.
 The server is authoritative: clients send intents (`game:roll`,
 `trade:offer`) and receive the whole state back. Seat fillers are marked only
 on the server; the state sent to clients never says which seats they are.
+
+### Chat, typing and voice
+
+Every table has a text chat. While someone is writing, the others see
+"Ana is typing…" above the box, and the chat button in the dock gets a small
+dot; the line fades three seconds after the last keystroke. The ping carries
+no text and is never echoed back to the sender.
+
+Tables made with friends also get **voice and video**, through
+[LiveKit](https://livekit.io): a "Join call" bar on the table page and a slim
+version inside the game panel, with mute, camera and leave buttons, and a
+green ring around whoever is talking. The server hands out a short-lived pass
+for that table's call only; it never carries audio or video itself. Quick Play
+seats strangers together, so it stays text-only, and with no LiveKit keys set
+the feature is hidden everywhere.
+
+### Notifications
+
+With notifications switched on in **Settings**, a player whose game is in
+another tab is told when it is their turn, when someone chats, when a trade
+offer arrives, when a friend takes a seat, and when the match starts. Nothing
+is shown while the tab is in front, at most one notification every two seconds,
+and clicking one brings the game back. The browser is only asked for
+permission from that switch, because browsers refuse the ask otherwise.
 
 ### Music
 

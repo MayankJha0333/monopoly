@@ -23,7 +23,9 @@ export async function joinRoom(page: Page, name: string, code: string) {
   await page.getByRole('button', { name: 'Play with friends' }).click();
   await page.getByLabel('Table code').fill(code);
   await page.getByRole('button', { name: 'Join', exact: true }).click();
-  await expect(page.locator('.seat', { hasText: name })).toBeVisible();
+  // Match the seat's name exactly: character names like "Turbo" contain other
+  // players' names, and a loose match then finds two seats.
+  await expect(page.locator('.lb-seat .nm', { hasText: new RegExp(`^${name}$`) })).toBeVisible();
 }
 
 export async function newPlayerPage(context: BrowserContext, view: '3d' | '2d' = '2d'): Promise<Page> {

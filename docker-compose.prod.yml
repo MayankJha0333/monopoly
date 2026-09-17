@@ -9,6 +9,11 @@ services:
       PORT: "3001"
       TRUST_PROXY: "1"
       ALLOWED_ORIGINS: https://${DOMAIN:-rentrush.in},https://www.${DOMAIN:-rentrush.in}
+      # Voice and video at private tables. Leave empty to switch the feature
+      # off; the game then hides it.
+      LIVEKIT_URL: ${LIVEKIT_URL:-}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
     volumes:
       - app-data:/data
     expose:
