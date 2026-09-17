@@ -238,7 +238,13 @@ export function Home() {
           ensure={ensure}
         />
       )}
-      {open === 'leaders' && <LeaderboardDialog onClose={() => setOpen(null)} />}
+      {open === 'leaders' && (
+        <LeaderboardDialog
+          onClose={() => setOpen(null)}
+          onSignup={() => setOpen('signup')}
+          onPlay={() => { setOpen(null); void onPlay(); }}
+        />
+      )}
       {open === 'settings' && <SettingsDialog onClose={() => setOpen(null)} />}
       {open === 'howto' && <HowToDialog onClose={() => setOpen(null)} />}
       {open === 'profile' && <ProfileDialog onClose={() => setOpen(null)} onSignup={() => setOpen('signup')} />}

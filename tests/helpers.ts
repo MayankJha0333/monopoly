@@ -26,10 +26,10 @@ export async function joinRoom(page: Page, name: string, code: string) {
   await expect(page.locator('.seat', { hasText: name })).toBeVisible();
 }
 
-export async function newPlayerPage(context: BrowserContext, view: '3d' | '2d' = '3d'): Promise<Page> {
+export async function newPlayerPage(context: BrowserContext, view: '3d' | '2d' = '2d'): Promise<Page> {
   const page = await context.newPage();
-  // Tests run on software WebGL, so use low graphics. Tests that drive two
-  // players at once pick the 2D board, which needs no GPU at all.
+  // Tests run on software WebGL, which is slow, so rule and flow tests use the
+  // 2D board; the tests about the 3D view ask for it explicitly.
   await page.addInitScript((v) => localStorage.setItem('sunnyport.prefs', JSON.stringify({ view: v, quality: 'low' })), view);
   page.on('pageerror', (e) => { throw new Error(`page error: ${e.message}`); });
   return page;

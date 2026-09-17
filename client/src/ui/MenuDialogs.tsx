@@ -96,7 +96,50 @@ export function PrivateTableDialog({ look, initialCode, onClose, onJoined, ensur
   );
 }
 
-export function LeaderboardDialog({ onClose }: { onClose: () => void }) {
+function EmptyPodium() {
+  return (
+    <svg className="sp-empty-art" viewBox="0 0 320 200" role="img" aria-label="An empty podium waiting for a champion">
+      <defs>
+        <linearGradient id="lbCup" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffe27a" />
+          <stop offset="1" stopColor="#f0a500" />
+        </linearGradient>
+        <linearGradient id="lbSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#dff4ff" />
+          <stop offset="1" stopColor="#fffaf0" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="320" height="200" rx="24" fill="url(#lbSky)" />
+      <g className="sp-rays" stroke="#ffd95e" strokeWidth="4" strokeLinecap="round" opacity="0.8">
+        <path d="M160 18v14M118 30l7 12M202 30l-7 12M96 58l12 6M224 58l-12 6" />
+      </g>
+      <g className="sp-cup">
+        <path d="M138 44h44v18a22 22 0 0 1-44 0z" fill="url(#lbCup)" stroke="#c77f00" strokeWidth="3" />
+        <path d="M138 50h-10a10 10 0 0 0 10 14M182 50h10a10 10 0 0 1-10 14" fill="none" stroke="#c77f00" strokeWidth="3" />
+        <rect x="153" y="84" width="14" height="10" fill="#f0a500" />
+        <rect x="144" y="94" width="32" height="8" rx="3" fill="#10233b" />
+        <path d="M160 56l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6-4.5-4 6-1z" fill="#ffffff" />
+      </g>
+      <rect x="66" y="132" width="62" height="48" rx="8" fill="#6fd3f0" />
+      <rect x="128" y="112" width="64" height="68" rx="8" fill="#ff8a7a" />
+      <rect x="192" y="146" width="62" height="34" rx="8" fill="#ffd166" />
+      <text x="97" y="164" textAnchor="middle" fontFamily="Bungee, Outfit, sans-serif" fontSize="22" fill="#ffffff">2</text>
+      <text x="160" y="152" textAnchor="middle" fontFamily="Bungee, Outfit, sans-serif" fontSize="26" fill="#ffffff">1</text>
+      <text x="223" y="170" textAnchor="middle" fontFamily="Bungee, Outfit, sans-serif" fontSize="20" fill="#ffffff">3</text>
+      <g fill="#ffffff" stroke="#c9d6e3" strokeWidth="2" strokeDasharray="4 4">
+        <circle cx="97" cy="116" r="12" />
+        <circle cx="223" cy="130" r="12" />
+      </g>
+      <rect x="40" y="180" width="240" height="6" rx="3" fill="#c9d6e3" />
+    </svg>
+  );
+}
+
+export function LeaderboardDialog({ onClose, onSignup, onPlay }: {
+  onClose: () => void;
+  onSignup?: () => void;
+  onPlay?: () => void;
+}) {
   const [rows, setRows] = useState<LeaderRow[] | null>(null);
   const [error, setError] = useState('');
   const me = useAuth((s) => s.user);
@@ -108,7 +151,17 @@ export function LeaderboardDialog({ onClose }: { onClose: () => void }) {
       {error && <div className="sp-banner">{error}</div>}
       {!rows && !error && <p className="sp-muted">Loading the top players…</p>}
       {rows && rows.length === 0 && (
-        <p className="sp-muted">No ranked players yet. Create an account and win a match to take the top spot.</p>
+        <div className="sp-empty-state">
+          <EmptyPodium />
+          <h3>The podium is waiting</h3>
+          <p className="sp-muted">Nobody has claimed a spot yet. Win a match with an account and your name goes up first.</p>
+          <div className="sp-results-actions">
+            {(!me || me.isGuest) && onSignup && (
+              <button className="sp-btn sp-btn-sun" onClick={onSignup}>Create an account</button>
+            )}
+            {onPlay && <button className={`sp-btn ${me && !me.isGuest ? 'sp-btn-sun' : ''}`} onClick={onPlay}>Play a match</button>}
+          </div>
+        </div>
       )}
       {rows && rows.length > 0 && (
         <div className="sp-table-wrap">
@@ -136,7 +189,7 @@ export function LeaderboardDialog({ onClose }: { onClose: () => void }) {
           </table>
         </div>
       )}
-      {me?.isGuest && <p className="sp-muted">Guests are not ranked. Sign up to appear here.</p>}
+      {me?.isGuest && rows && rows.length > 0 && <p className="sp-muted">Guests are not ranked. Sign up to appear here.</p>}
     </Dialog>
   );
 }

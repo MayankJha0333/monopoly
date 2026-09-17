@@ -66,9 +66,16 @@ sticky sessions and a shared room store before scaling out.
 **Sign up** (username, email, password) at any time. A guest who signs up
 keeps everything they earned. Members appear on the leaderboard.
 
-**Play with friends** creates a private table with house rules (auctions,
-Beach Break pot, match length, turn timer, starting cash, table size). Share
-the five-character code or the invite link; the host can fill empty seats.
+**Play with friends** opens a private table page in the same sunny style as
+the menu: a big table code with Copy / Share buttons, a seat card for every
+place at the table (open seats wait for friends), your character and colour,
+and the house rules (auctions, Beach Break pot, match length, turn timer,
+starting cash, table size). The host can fill empty seats and starts the game.
+
+During a match, the Log / Chat / Trades panel can be minimized into a small
+dock (right side on desktop, above the action bar on phones). The dock shows
+counts for new log lines, chat messages and offers, and opens by itself when
+someone sends you a trade. The board widens to use the freed space.
 
 ## How it fits together
 
