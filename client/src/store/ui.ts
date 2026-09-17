@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 
+const PANEL_KEY = 'sunnyport.panelMin';
+const BUSY_MAX_MS = 9000;
+let busyTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface UIStore {
   /** Tiles to light up on the board — trade contents, a deed being inspected. */
   highlight: number[];
@@ -13,6 +17,9 @@ interface UIStore {
   /** True while the dice are in the air or a token is walking, so prompts
    *  wait their turn instead of covering the move. */
   boardBusy: boolean;
+  /** The log/chat/trades panel is folded into a small dock. */
+  panelMin: boolean;
+  setPanelMin: (min: boolean) => void;
   setHighlight: (ids: number[], color?: string | null) => void;
   clearHighlight: () => void;
   requestCam: (kind: 'reset' | 'in' | 'out') => void;
@@ -28,10 +35,20 @@ export const useUI = create<UIStore>((set) => ({
   autoEndArmed: true,
   boardInset: 0,
   boardBusy: false,
+  panelMin: (() => { try { return localStorage.getItem(PANEL_KEY) === '1'; } catch { return false; } })(),
+  setPanelMin: (panelMin) => {
+    set({ panelMin });
+    try { localStorage.setItem(PANEL_KEY, panelMin ? '1' : '0'); } catch { /* private mode */ }
+  },
   setHighlight: (ids, color = null) => set({ highlight: ids, highlightColor: color }),
   clearHighlight: () => set({ highlight: [], highlightColor: null }),
   requestCam: (kind) => set((s) => ({ camCmd: { seq: s.camCmd.seq + 1, kind } })),
   setAutoEnd: (armed) => set({ autoEndArmed: armed }),
   setBoardInset: (px) => set({ boardInset: px }),
-  setBoardBusy: (busy) => set({ boardBusy: busy }),
+  setBoardBusy: (busy) => {
+    set({ boardBusy: busy });
+    // A safety net: prompts never wait on a board animation for too long.
+    if (busyTimer) clearTimeout(busyTimer);
+    busyTimer = busy ? setTimeout(() => set({ boardBusy: false }), BUSY_MAX_MS) : null;
+  },
 }));

@@ -20,13 +20,30 @@ interface Props {
   onTile: (id: number) => void;
 }
 
+const ICONS: Record<Tab, string> = {
+  log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  chat: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z',
+  trades: 'M4 8h13l-3-3M20 16H7l3 3',
+};
+const LABELS: Record<Tab, string> = { log: 'Log', chat: 'Chat', trades: 'Trades' };
+
+function DockIcon({ d }: { d: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+  );
+}
+
 export function SidePanel({ state, playerId, onTile }: Props) {
   const [tab, setTab] = useState<Tab>('log');
-  const [collapsed, setCollapsed] = useState(false);
+  const minimized = useUI((s) => s.panelMin);
+  const setMinimized = useUI((s) => s.setPanelMin);
   const [draft, setDraft] = useState('');
   const [unreadChat, setUnreadChat] = useState(0);
+  const [unreadLog, setUnreadLog] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const seenChat = useRef(state.chat.length);
+  const seenLog = useRef(state.log.length);
 
   const openTrades = state.trades.filter((t) => t.status === 'open');
   const forMe = openTrades.filter((t) => t.to === playerId);
@@ -47,9 +64,37 @@ export function SidePanel({ state, playerId, onTile }: Props) {
   }, [involvingMe.length, openTrades.length]);
 
   useEffect(() => {
-    if (tab === 'chat') { seenChat.current = state.chat.length; setUnreadChat(0); }
-    else setUnreadChat(state.chat.length - seenChat.current);
-  }, [state.chat.length, tab]);
+    if (tab === 'chat' && !minimized) { seenChat.current = state.chat.length; setUnreadChat(0); }
+    else setUnreadChat(Math.max(0, state.chat.length - seenChat.current));
+  }, [state.chat.length, tab, minimized]);
+
+  useEffect(() => {
+    if (tab === 'log' && !minimized) { seenLog.current = state.log.length; setUnreadLog(0); }
+    else setUnreadLog(Math.max(0, state.log.length - seenLog.current));
+  }, [state.log.length, tab, minimized]);
+
+  // An offer waiting on your answer opens the panel so it is not missed.
+  useEffect(() => {
+    if (forMe.length > 0 && minimized) { setTab('trades'); setMinimized(false); }
+  }, [forMe.length]);
+
+  const openTab = (t: Tab) => { setTab(t); setMinimized(false); };
+
+  if (minimized) {
+    const badges: Record<Tab, number> = { log: unreadLog, chat: unreadChat, trades: forMe.length };
+    return (
+      <nav className="side-dock" aria-label="Log, chat and trades">
+        {(['log', 'chat', 'trades'] as Tab[]).map((t) => (
+          <button key={t} className="dock-btn" onClick={() => openTab(t)} aria-label={`Open ${LABELS[t].toLowerCase()}`}
+            data-alert={(t !== 'log' && badges[t] > 0) || undefined}>
+            <DockIcon d={ICONS[t]} />
+            <span className="dock-label">{LABELS[t]}</span>
+            {badges[t] > 0 && <span className="dock-badge">{badges[t] > 99 ? '99+' : badges[t]}</span>}
+          </button>
+        ))}
+      </nav>
+    );
+  }
 
   const submitChat = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +105,7 @@ export function SidePanel({ state, playerId, onTile }: Props) {
   };
 
   return (
-    <aside className="card side" data-collapsed={collapsed}>
+    <aside className="card side">
       <div className="tabs">
         <button className="tab" data-on={tab === 'log'} onClick={() => setTab('log')}>Log</button>
         <button className="tab" data-on={tab === 'chat'} onClick={() => setTab('chat')}>
@@ -69,8 +114,9 @@ export function SidePanel({ state, playerId, onTile }: Props) {
         <button className="tab" data-on={tab === 'trades'} onClick={() => setTab('trades')}>
           Trades{forMe.length > 0 && <span className="badge">{forMe.length}</span>}
         </button>
-        <button className="tab-collapse" aria-label="Collapse panel" onClick={() => setCollapsed(!collapsed)}>
-          {collapsed ? '▲' : '▼'}
+        <button className="tab-min" aria-label="Minimize panel" title="Minimize" onClick={() => setMinimized(true)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"
+            strokeLinecap="round" aria-hidden="true"><path d="M6 12h12" /></svg>
         </button>
       </div>
 

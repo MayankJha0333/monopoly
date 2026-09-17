@@ -46,6 +46,7 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
   const toast = useGame((s) => s.toast);
 
   const requestCam = useUI((s) => s.requestCam);
+  const panelMin = useUI((s) => s.panelMin);
   const setHighlight = useUI((s) => s.setHighlight);
   const clearHighlight = useUI((s) => s.clearHighlight);
 
@@ -113,13 +114,24 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
     return () => window.removeEventListener('keydown', onKey);
   }, [isMyTurn, state.turn.phase, openTrade]);
 
+  // Folding the panel away gives the board the room; re-frame it.
+  const firstFrame = useRef(true);
+  useEffect(() => {
+    if (firstFrame.current) { firstFrame.current = false; return; }
+    const h = requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'));
+      requestCam('reset');
+    });
+    return () => cancelAnimationFrame(h);
+  }, [panelMin, requestCam]);
+
   const leave = () => {
     if (state.status === 'playing' && !me?.bankrupt) { setConfirmLeave(true); return; }
     leaveTable();
   };
 
   return (
-    <div className="game" data-myturn={isMyTurn}>
+    <div className="game" data-myturn={isMyTurn} data-panel={panelMin ? 'min' : 'open'}>
       <div className="stage">
         <Suspense fallback={<div className="table-loading"><span className="spinner" />Setting up the table…</div>}>
           {view === '3d' ? (

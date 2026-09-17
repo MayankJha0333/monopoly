@@ -92,7 +92,7 @@ export function BoardView({ state, focusTile, quality }: Props) {
     let last = performance.now();
 
     const frame = (now: number) => {
-      const delta = Math.min(0.05, (now - last) / 1000);
+      const delta = Math.min(0.25, (now - last) / 1000);
       last = now;
       const st = stateRef.current;
       const gated = now < walkGate.current;

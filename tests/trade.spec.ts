@@ -9,14 +9,18 @@ async function playUntilOwned(pages: Page[], owner: Page, count: number) {
 
     for (const page of pages) {
       const click = async (locator: ReturnType<Page['locator']>) => {
+        if (!(await locator.count())) return false;
         try { await locator.first().click({ timeout: 1000 }); return true; } catch { return false; }
       };
-      if (await click(page.locator('.modal .btn', { hasText: 'Buy for' }))) continue;
-      if (await click(page.locator('.modal .btn', { hasText: 'Pass' }))) continue;
+      const buy = page.locator('.modal .btn', { hasText: 'Buy for' });
+      if (await click(buy)) continue;
+      // Only an auction gets a pass; a street for sale is always bought.
+      if (await click(page.locator('.modal', { hasText: 'Auction —' }).locator('.btn', { hasText: /^Pass$/ }))) continue;
       await click(page.getByRole('button', { name: /Roll the dice|Roll again/ }));
+      await click(page.getByRole('button', { name: /End turn/ }));
     }
     // The board plays the throw and the walk before the next prompt lands.
-    await pages[0]!.waitForTimeout(1400);
+    await pages[0]!.waitForTimeout(700);
   }
   throw new Error('nobody accumulated property in time');
 }
@@ -26,8 +30,8 @@ test('a trade offer names its properties and moves them when accepted', async ({
   test.slow();
   const hostCtx = await browser.newContext();
   const guestCtx = await browser.newContext();
-  const host = await newPlayerPage(hostCtx, '2d');
-  const guest = await newPlayerPage(guestCtx, '2d');
+  const host = await newPlayerPage(hostCtx);
+  const guest = await newPlayerPage(guestCtx);
 
   const code = await createRoom(host, 'Ada');
   await joinRoom(guest, 'Bob', code);
@@ -69,8 +73,8 @@ test('a trade offer names its properties and moves them when accepted', async ({
 test('a trade cannot be sent empty and can be withdrawn', async ({ browser }) => {
   const hostCtx = await browser.newContext();
   const guestCtx = await browser.newContext();
-  const host = await newPlayerPage(hostCtx, '2d');
-  const guest = await newPlayerPage(guestCtx, '2d');
+  const host = await newPlayerPage(hostCtx);
+  const guest = await newPlayerPage(guestCtx);
 
   const code = await createRoom(host, 'Ada');
   await joinRoom(guest, 'Bob', code);

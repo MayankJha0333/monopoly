@@ -97,8 +97,9 @@ test.describe('playing a turn', () => {
   });
 
   test('camera controls stay stable', async ({ browser }) => {
+    test.slow();
     const ctx = await browser.newContext();
-    const page = await newPlayerPage(ctx);
+    const page = await newPlayerPage(ctx, '3d');
     await soloGame(page);
 
     for (const title of ['Zoom in', 'Zoom in', 'Zoom out', 'Reset the view']) {
@@ -110,8 +111,9 @@ test.describe('playing a turn', () => {
   });
 
   test('the board and controls fit a phone screen', async ({ browser }) => {
+    test.slow();
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const page = await newPlayerPage(ctx);
+    const page = await newPlayerPage(ctx, '3d');
     await soloGame(page);
     await page.waitForTimeout(1500);
 
@@ -122,9 +124,12 @@ test.describe('playing a turn', () => {
       document.documentElement.scrollWidth > window.innerWidth + 1);
     expect(overflow).toBe(false);
 
-    // The log panel can be folded away to give the board room.
-    await page.getByLabel('Collapse panel').click();
+    // The log panel folds into a dock to give the board room, and comes back.
+    await page.getByLabel('Minimize panel').click();
     await expect(page.locator('.side .panel-body')).toBeHidden();
+    await expect(page.locator('.side-dock')).toBeVisible();
+    await page.getByLabel('Open chat').click();
+    await expect(page.locator('.side .tab[data-on="true"]')).toContainText('Chat');
     await ctx.close();
   });
 });

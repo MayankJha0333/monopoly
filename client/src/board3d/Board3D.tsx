@@ -76,7 +76,7 @@ function pointAt(state: GameState, playerId: string, index: number) {
 }
 
 function readPlayGap(): { t: number; r: number; b: number; l: number } {
-  const cs = getComputedStyle(document.documentElement);
+  const cs = getComputedStyle(document.querySelector('.game') ?? document.documentElement);
   const px = (name: string) => {
     const probe = cs.getPropertyValue(name).trim();
     if (!probe) return 0;
@@ -106,6 +106,7 @@ function CameraRig({ rig, showcase }: { rig: React.RefObject<Rig | null>; showca
   const manual = useRef(false);
   const gap = useRef({ t: 0, r: 0, b: 0, l: 0 });
   const lastFollow = useRef(0);
+  const panelMin = useUI((s) => s.panelMin);
 
   // Centre the picture in the space the HUD leaves free.
   useEffect(() => {
@@ -115,7 +116,7 @@ function CameraRig({ rig, showcase }: { rig: React.RefObject<Rig | null>; showca
     camera.setViewOffset(w, h, -(g.l - g.r) / 2, -(g.t - g.b) / 2, w, h);
     camera.updateProjectionMatrix();
     rig.current?.overview(true);
-  }, [size.width, size.height, camera, showcase, rig]);
+  }, [size.width, size.height, camera, showcase, rig, panelMin]);
 
   useEffect(() => {
     const c = controls.current;

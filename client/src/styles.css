@@ -448,10 +448,12 @@ select.select {
   border-radius: 999px; background: var(--danger); color: #fff;
   font-size: 10px; font-weight: 700;
 }
-.tab-collapse {
-  display: none; min-height: 34px; width: 34px;
-  border-radius: 9px; color: var(--muted); font-size: 13px;
+.tab-min {
+  display: grid; place-items: center; flex: none;
+  min-height: 34px; width: 34px; margin-bottom: 1px;
+  border-radius: 9px; color: var(--muted);
 }
+.tab-min:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
 
 .panel-body { overflow-y: auto; padding: 8px 10px 12px; display: grid; gap: 2px; align-content: start; }
 
@@ -697,7 +699,6 @@ select.select {
   .cam-group { padding: 3px 4px; }
   .icon-btn { width: 24px; height: 24px; font-size: 14px; }
   .hide-sm { display: none !important; }
-  .tab-collapse { display: block; }
   .action-pill { padding: 7px; gap: 6px; }
   .action-pill .btn { min-height: 38px; padding: 0 13px; font-size: 13.5px; }
   .rail {
@@ -710,9 +711,6 @@ select.select {
   .side { grid-column: 1; grid-row: 3; align-self: end; max-height: 30vh; }
   .actions { grid-column: 1; grid-row: 4; }
   .turn-banner { display: none; }
-  .side[data-collapsed='true'] { max-height: 52px; }
-  .side[data-collapsed='true'] .panel-body,
-  .side[data-collapsed='true'] .chat-wrap { display: none; }
 }
 
 @media (max-width: 620px) {
