@@ -16,6 +16,7 @@ import { Results } from './Results';
 import { PlayerRail } from './PlayerRail';
 import { CharacterAvatar } from './characters';
 import { SidePanel } from './SidePanel';
+import { MicButton } from './VoiceBar';
 import { TradeDialog } from './TradeDialog';
 
 // The boards and their painters are only needed once a game starts.
@@ -186,6 +187,7 @@ export function GameScreen({ state, playerId }: { state: GameState; playerId: st
             onClick={() => { const n = !music; setMusicEnabled(n); setMusicState(n); }}>
             {music ? '♪' : '♪̸'}
           </button>
+          <MicButton />
           <button className="btn btn-sm" title={muted ? 'Unmute' : 'Mute'}
             onClick={() => { const n = !muted; setMuted(n); setMutedState(n); if (!n) play('click'); }}>
             {muted ? '🔇' : '🔊'}

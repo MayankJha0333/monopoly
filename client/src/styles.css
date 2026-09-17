@@ -564,6 +564,37 @@ select.select {
 .vc-hang { margin-left: auto; background: #e2574c; border-color: #e2574c; color: #fff; }
 .vc-hang svg { transform: rotate(135deg); }
 .vc-error { margin: 0; font-size: 12px; color: #ffb4ad; }
+.vc-tap { width: 100%; }
+.vc-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+.vc-meter {
+  flex: 0 0 56px; height: 6px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14); overflow: hidden;
+}
+.vc-meter i {
+  display: block; height: 100%; width: 0;
+  background: linear-gradient(90deg, #42c26b, #ffc93c);
+  transition: width 0.12s linear;
+}
+.vc-hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+.vc-off { opacity: 0.75; }
+/* Host's "silence this person" button on a tile */
+.vc-silence {
+  position: absolute; bottom: 3px; right: 3px;
+  display: grid; place-items: center; width: 18px; height: 18px;
+  border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel); color: var(--muted); cursor: pointer; opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.vc-tile:hover .vc-silence, .vc-silence:focus-visible { opacity: 1; }
+.vc-silence:hover { color: #ffb4ad; border-color: #e2574c; }
+/* Microphone button in the game's top bar */
+.vc-mic-btn[data-off] { background: rgba(226, 87, 76, 0.18); border-color: #e2574c; color: #ffb4ad; }
+.vc-mic-btn[data-live] { box-shadow: 0 0 0 2px rgba(66, 194, 107, 0.55); }
+.vc-off .vc-hint { max-width: 46ch; }
+.lb-voice-card .vc-status, .lb-voice-card .vc-hint { color: rgba(16, 49, 75, 0.68); }
+.lb-voice-card .vc-meter { background: rgba(8, 44, 70, 0.14); }
+.lb-voice-card .vc-bar[data-live='true'] .vc-status { grid-column: 1 / -1; }
+.lb-voice-card .vc-bar[data-live='true'] .vc-hint { grid-column: 1 / -1; }
 
 /* Action bar */
 .actions {
