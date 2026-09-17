@@ -1,4 +1,4 @@
-# Sunnyport
+# Rent Rush
 
 A real-time multiplayer property-trading board game on a sunny 3D island.
 Press **Play** and you are at a four-player table within seconds; or make a

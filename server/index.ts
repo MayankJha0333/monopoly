@@ -323,11 +323,11 @@ io.on('connection', (socket) => {
 });
 
 http.listen(PORT, () => {
-  console.log(`[sunnyport] server listening on http://localhost:${PORT}`);
+  console.log(`[rentrush] server listening on http://localhost:${PORT}`);
 });
 
 function shutdown(signal: string) {
-  console.log(`[sunnyport] ${signal} received, closing…`);
+  console.log(`[rentrush] ${signal} received, closing…`);
   io.emit('notice', 'The server is restarting. You will be reconnected shortly.');
   rooms.destroyAll();
   io.close();

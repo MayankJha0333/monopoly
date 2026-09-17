@@ -31,9 +31,9 @@ export async function newPlayerPage(context: BrowserContext, view: '3d' | '2d' =
   // Tests run on software WebGL, which is slow, so rule and flow tests use the
   // 2D board; the tests about the 3D view ask for it explicitly.
   await page.addInitScript((v) => {
-    localStorage.setItem('sunnyport.prefs', JSON.stringify({ view: v, quality: 'low' }));
+    localStorage.setItem('rentrush.prefs', JSON.stringify({ view: v, quality: 'low' }));
     // Most tests read the log, so start with the side panel open.
-    if (!localStorage.getItem('sunnyport.panel')) localStorage.setItem('sunnyport.panel', 'open');
+    if (!localStorage.getItem('rentrush.panel')) localStorage.setItem('rentrush.panel', 'open');
   }, view);
   page.on('pageerror', (e) => { throw new Error(`page error: ${e.message}`); });
   return page;

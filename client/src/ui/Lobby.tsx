@@ -41,7 +41,7 @@ export function Lobby({ state, playerId }: Props) {
   const share = async () => {
     const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
     if (nav.share) {
-      try { await nav.share({ title: 'Join my Sunnyport table', text: `Join my table on Sunnyport — code ${state.code}`, url: link }); } catch { /* closed */ }
+      try { await nav.share({ title: 'Join my Rent Rush table', text: `Join my table on Rent Rush — code ${state.code}`, url: link }); } catch { /* closed */ }
     } else {
       await copy('link');
     }
@@ -66,9 +66,9 @@ export function Lobby({ state, playerId }: Props) {
       <Backdrop />
 
       <header className="sp-top">
-        <div className="sp-logo" aria-label="Sunnyport">
+        <div className="sp-logo" aria-label="Rent Rush">
           <span className="sp-logo-sun" aria-hidden="true" />
-          <span className="sp-logo-word">SUNNYPORT</span>
+          <span className="sp-logo-word">RENT RUSH</span>
         </div>
         <div className="sp-top-right">
           <span className="sp-chip">{state.players.length} / {s.maxPlayers} seated</span>

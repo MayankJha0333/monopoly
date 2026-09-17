@@ -64,7 +64,7 @@ export function AuthDialog({ initial, onClose }: { initial: Mode; onClose: () =>
     try {
       if (mode === 'signup') {
         await signup({ username: username.trim(), email: email.trim(), password });
-        toast(`Welcome to Sunnyport, ${username.trim()}!`);
+        toast(`Welcome to Rent Rush, ${username.trim()}!`);
       } else {
         await login({ login: loginName.trim(), password });
         toast('Logged in.');

@@ -51,5 +51,17 @@ then export to WebP at 512px and wire them in as above.
 Do not copy art, logos, board layouts, names or character designs from
 published property-trading games or their apps. Trade marks, trade dress and
 character art are protected separately from the rules, and lifting them is the
-fastest way to turn a side project into a takedown notice. Sunnyport's names,
+fastest way to turn a side project into a takedown notice. Rent Rush's names,
 board art and cards are original; keep new content that way.
+
+## Brand images
+
+`client/public/og.png` (the link preview card) and `icon-180/192/512.png` are
+the only pictures in the repo, and they are generated too:
+
+```bash
+node tools/make-images.mjs
+```
+
+It screenshots `tools/share-card.html` and `client/public/favicon.svg`, so
+changing the brand means editing those two files and running the script again.

@@ -13,7 +13,7 @@ import {
   HowToDialog, LeaderboardDialog, PrivateTableDialog, ProfileDialog, SettingsDialog,
 } from './MenuDialogs';
 
-const LOOK_KEY = 'sunnyport.look';
+const LOOK_KEY = 'rentrush.look';
 const IDS = TOKENS.map((t) => t.id as TokenId);
 
 type Open = null | 'login' | 'signup' | 'private' | 'leaders' | 'settings' | 'howto' | 'profile';
@@ -136,10 +136,10 @@ export function Home() {
       <Backdrop />
 
       <header className="sp-top">
-        <div className="sp-logo" aria-label="Sunnyport">
+        <h1 className="sp-logo">
           <span className="sp-logo-sun" aria-hidden="true" />
-          <span className="sp-logo-word">SUNNYPORT</span>
-        </div>
+          <span className="sp-logo-word">RENT RUSH</span>
+        </h1>
         <div className="sp-top-right">
           <span className="sp-chip sp-online" data-live={connected}>
             <i />{connected ? `${Math.max(1, online)} online` : 'Connecting…'}
@@ -224,7 +224,7 @@ export function Home() {
       </main>
 
       <footer className="sp-foot">
-        <span>Sunnyport · an island trading game</span>
+        <span>Rent Rush · buy, rent and build your way to the top</span>
         <span className="sp-hint">Press Enter to play · ← → to change character</span>
       </footer>
 

@@ -3,12 +3,18 @@
  * Uses Node's built-in `node:sqlite` (Node 22.13+), so there is no native
  * module to compile. Set DATA_DIR to put the file on a persistent volume.
  */
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 const DATA_DIR = process.env.DATA_DIR ?? path.resolve(process.cwd(), 'data');
-const FILE = process.env.DB_FILE ?? path.join(DATA_DIR, 'sunnyport.db');
+function defaultFile(): string {
+  const file = path.join(DATA_DIR, 'rentrush.db');
+  // Keep using a database written before the game was renamed.
+  const old = path.join(DATA_DIR, 'sunnyport.db');
+  return existsSync(file) || !existsSync(old) ? file : old;
+}
+const FILE = process.env.DB_FILE ?? defaultFile();
 
 export function openDb(file = FILE): DatabaseSync {
   if (file !== ':memory:') mkdirSync(path.dirname(file), { recursive: true });

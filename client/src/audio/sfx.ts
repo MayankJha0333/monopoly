@@ -121,11 +121,11 @@ const RECIPES: Record<string, () => Float32Array> = {
   click: () => render([{ shape: sine(1400), dur: 0.03, gain: 0.22, env: decay(16) }], 0.05),
 };
 
-let muted = (() => { try { return localStorage.getItem('sunnyport.muted') === '1'; } catch { return false; } })();
+let muted = (() => { try { return localStorage.getItem('rentrush.muted') === '1'; } catch { return false; } })();
 
 /* ----------------------------------------------------------------- music */
 
-const MUSIC_KEY = 'sunnyport.music';
+const MUSIC_KEY = 'rentrush.music';
 let musicOn = (() => { try { return localStorage.getItem(MUSIC_KEY) !== '0'; } catch { return true; } })();
 let musicWanted = false;
 
@@ -184,7 +184,7 @@ export function play(name: string) {
 
 export function setMuted(next: boolean) {
   muted = next;
-  try { localStorage.setItem('sunnyport.muted', next ? '1' : '0'); } catch { /* private mode */ }
+  try { localStorage.setItem('rentrush.muted', next ? '1' : '0'); } catch { /* private mode */ }
   if (next) stopMusic(true);
   else if (musicWanted) startMusic();
 }

@@ -4,7 +4,7 @@ import { createRoom, joinRoom, newPlayerPage, waitForBoard } from './helpers';
 test.describe('lobby and rooms', () => {
   test('home screen refuses a one-letter nickname', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByLabel('Sunnyport')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'RENT RUSH' })).toBeVisible();
     await page.getByLabel('Nickname').fill('A');
     await page.getByRole('button', { name: /PLAY/ }).click();
     await expect(page.locator('.toast')).toContainText('at least two characters');

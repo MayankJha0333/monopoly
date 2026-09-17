@@ -1,5 +1,5 @@
 {
-  "name": "sunnyport",
+  "name": "rentrush",
   "version": "2.0.0",
   "private": true,
   "type": "module",
@@ -45,7 +45,7 @@
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
   },
-  "description": "Sunnyport \u2014 a real-time multiplayer property-trading board game in 3D.",
+  "description": "Rent Rush \u2014 a real-time multiplayer property-trading board game in 3D.",
   "engines": {
     "node": ">=22.13"
   }
