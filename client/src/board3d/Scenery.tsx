@@ -91,33 +91,60 @@ function Sea({ animated }: { animated: boolean }) {
   );
 }
 
+/**
+ * The island floor: beach, lawn, plaza and ring road.
+ *
+ * Each surface is its own flat ring, and no two of them overlap or share a
+ * height — two surfaces in the same place is what makes ground flicker as the
+ * camera moves. They are also cut into many small triangles rather than a few
+ * huge ones: the sun's shadow is worked out per triangle corner, and across a
+ * 27-unit triangle that guess drifts far enough to make stripes crawl over
+ * the grass.
+ */
 function Island() {
+  const flat = (inner: number, outer: number, rings: number, seg = 96) => {
+    const g = new THREE.RingGeometry(inner, outer, seg, rings);
+    g.rotateX(-Math.PI / 2);
+    return g;
+  };
+  const lawn = useMemo(() => flat(0.02, ISLAND_R, 14), []);
+  const beach = useMemo(() => flat(ISLAND_R - 0.6, SHORE_R, 6), []);
+  const plaza = useMemo(() => flat(0.02, 14.6, 8, 64), []);
+
   return (
     <group>
-      {/* sand shelf */}
-      <mesh position={[0, GROUND_Y - 0.55, 0]} receiveShadow>
-        <cylinderGeometry args={[SHORE_R, SHORE_R + 3, 1.1, 72]} />
+      {/* Beach: a ring around the lawn, slightly lower, so the two never
+          share a pixel. */}
+      <mesh geometry={beach} position={[0, GROUND_Y - 0.09, 0]} receiveShadow>
         <meshStandardMaterial color="#f3dca4" roughness={1} />
       </mesh>
-      {/* lawn */}
-      <mesh position={[0, GROUND_Y - 0.2, 0]} receiveShadow>
-        <cylinderGeometry args={[ISLAND_R, ISLAND_R + 0.6, 0.4, 72]} />
+      {/* the beach's edge, as a wall with no top or bottom face */}
+      <mesh position={[0, GROUND_Y - 0.64, 0]}>
+        <cylinderGeometry args={[SHORE_R, SHORE_R + 3, 1.1, 72, 1, true]} />
+        <meshStandardMaterial color="#f3dca4" roughness={1} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Lawn */}
+      <mesh geometry={lawn} position={[0, GROUND_Y, 0]} receiveShadow>
         <meshStandardMaterial color="#7fcf6a" roughness={1} />
       </mesh>
-      {/* plaza under the board */}
-      <mesh position={[0, GROUND_Y + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[14.6, 64]} />
-        <meshStandardMaterial color="#efe3c8" roughness={1} />
+      <mesh position={[0, GROUND_Y - 0.2, 0]}>
+        <cylinderGeometry args={[ISLAND_R, ISLAND_R + 0.6, 0.4, 72, 1, true]} />
+        <meshStandardMaterial color="#7fcf6a" roughness={1} side={THREE.DoubleSide} />
       </mesh>
-      {/* ring road */}
-      {/* polygonOffset pulls these flat layers towards the camera in the depth
-          test, so the road sits on the plaza and the centre line on the road
-          without the three of them fighting over the same pixels. */}
-      <mesh position={[0, GROUND_Y + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <ringGeometry args={[ROAD_R - 1.1, ROAD_R + 1.1, 96]} />
+
+      {/* Plaza under the board */}
+      <mesh geometry={plaza} position={[0, GROUND_Y + 0.015, 0]} receiveShadow>
+        <meshStandardMaterial color="#efe3c8" roughness={1} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+      </mesh>
+
+      {/* Ring road, and its centre line. polygonOffset settles the order the
+          card draws these thin layers in. */}
+      <mesh position={[0, GROUND_Y + 0.032, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <ringGeometry args={[ROAD_R - 1.1, ROAD_R + 1.1, 96, 2]} />
         <meshStandardMaterial color="#465062" roughness={0.95} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
       </mesh>
-      <mesh position={[0, GROUND_Y + 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, GROUND_Y + 0.048, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[ROAD_R - 0.04, ROAD_R + 0.04, 96]} />
         <meshBasicMaterial color="#ffe28a" polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
       </mesh>
