@@ -9,3 +9,18 @@ test-results/
 playwright-report/
 .sync.tgz
 _backup/
+
+# secrets — every .env file except the committed example
+.env.*
+!.env.example
+*.pem
+*.key
+*deploy_key*
+id_ed25519*
+id_rsa*
+
+# local-only folders (screenshots, backups, marketplace images)
+Claude outputs/
+_fiverr_tmp/
+fiverr-gallery/
+*.tgz
